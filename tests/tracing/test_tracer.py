@@ -35,3 +35,14 @@ def test_record_persists_when_conn_present(postgres_conn):
     with postgres_conn.cursor() as cur:
         cur.execute("SELECT node, tokens FROM runs WHERE run_id = %s", ("RUN-P",))
         assert cur.fetchone() == ("orchestrator", 140)
+
+
+def test_record_serializes_dict_input_with_models():
+    from logistics_agents.agents.contracts import CarrierFinding
+
+    tracer = Tracer(run_id="RUN-D", clock=lambda: FIXED)
+    car = CarrierFinding(status="delayed", eta=None, delayed=True, reasoning="late")
+    out = OrchestrationPlan(subtasks=["x"], reasoning="o")
+    tr = tracer.record("exception", {"carrier_finding": car}, out, _meta())
+    assert "delayed" in tr.input_json
+    assert "carrier_finding" in tr.input_json

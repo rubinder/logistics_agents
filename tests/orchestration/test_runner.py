@@ -64,6 +64,13 @@ def test_pipeline_returns_decision_persists_it_and_traces_five_nodes(postgres_co
     nodes = [tr.node for tr in tracer.records]
     assert nodes == ["orchestrator", "inventory", "carrier", "exception", "synthesis"]
 
+    by_node = {tr.node: tr for tr in tracer.records}
+    # Exception node's trace input reflects the peer findings it reasoned over.
+    assert "SKU-A" in by_node["exception"].input_json        # inventory discrepancy
+    assert "in_transit" in by_node["exception"].input_json   # carrier status
+    # Synthesis node's trace input includes the exception finding.
+    assert "QUANTITY_MISMATCH" in by_node["synthesis"].input_json
+
     # All five agents ran against the requested model, and traces were persisted.
     assert all(c.model == "claude-opus-4-8" for c in calls)
     with postgres_conn.cursor() as cur:

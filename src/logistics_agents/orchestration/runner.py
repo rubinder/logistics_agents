@@ -13,6 +13,15 @@ def run_pipeline(
     run_id: str,
     tracer: Tracer,
 ) -> Decision:
+    """Run the fixed agent DAG (orchestrator → inventory → carrier → exception →
+    synthesis) and return the synthesized Decision.
+
+    Non-transactional: each trace and the final decision are committed
+    independently, and an error raised by any agent propagates — leaving the
+    already-committed traces with no decision row. Callers running a dataset
+    must wrap each case and supply a unique run_id per run; reusing a run_id
+    raises IntegrityError on the runs/decisions primary keys.
+    """
     plan = orchestrator.plan(asn, llm, model)
     tracer.record("orchestrator", asn, plan.value, plan.meta)
 
@@ -24,10 +33,28 @@ def run_pipeline(
 
     po = repository.get_purchase_order(conn, asn.po_id) if asn.po_id else None
     exc = exception.detect(asn, po, inv.value, car.value, llm, model)
-    tracer.record("exception", asn, exc.value, exc.meta)
+    tracer.record(
+        "exception",
+        {
+            "purchase_order": po.model_dump(mode="json") if po is not None else None,
+            "inventory_finding": inv.value,
+            "carrier_finding": car.value,
+        },
+        exc.value,
+        exc.meta,
+    )
 
     decision = synthesis.decide(asn, inv.value, car.value, exc.value, llm, model)
-    tracer.record("synthesis", asn, decision.value, decision.meta)
+    tracer.record(
+        "synthesis",
+        {
+            "inventory_finding": inv.value,
+            "carrier_finding": car.value,
+            "exception_finding": exc.value,
+        },
+        decision.value,
+        decision.meta,
+    )
 
     repository.insert_decision(conn, run_id, asn.shipment_id, decision.value)
     return decision.value
