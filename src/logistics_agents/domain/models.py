@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field
 
 
 class LineItem(BaseModel):
@@ -12,7 +12,7 @@ class PurchaseOrder(BaseModel):
     po_id: str
     supplier: str
     expected_items: list[LineItem]
-    expected_date: datetime
+    expected_date: AwareDatetime
     destination_dc: str
 
 
@@ -22,6 +22,6 @@ class ShipmentNotification(BaseModel):
     carrier: str
     tracking_number: str
     reported_items: list[LineItem]
-    reported_date: datetime
+    reported_date: AwareDatetime
     docs_present: bool
     damaged: bool

@@ -52,3 +52,28 @@ def test_shipment_notification_allows_unknown_po():
     )
     assert asn.po_id is None
     assert asn.reported_items[0].quantity == 9
+
+
+def test_purchase_order_rejects_naive_datetime():
+    with pytest.raises(ValidationError):
+        PurchaseOrder(
+            po_id="PO-1",
+            supplier="Acme",
+            expected_items=[LineItem(sku="A1", quantity=10)],
+            expected_date=datetime(2026, 7, 1),  # naive — no tzinfo
+            destination_dc="DC-EAST",
+        )
+
+
+def test_shipment_notification_rejects_naive_datetime():
+    with pytest.raises(ValidationError):
+        ShipmentNotification(
+            shipment_id="SH-1",
+            po_id=None,
+            carrier="UPS",
+            tracking_number="1Z999",
+            reported_items=[LineItem(sku="A1", quantity=9)],
+            reported_date=datetime(2026, 7, 2),  # naive — no tzinfo
+            docs_present=True,
+            damaged=False,
+        )
