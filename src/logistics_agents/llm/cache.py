@@ -33,10 +33,10 @@ class RecordReplayCache:
                 raise CacheMissError(
                     f"No fixture for request key {request_key(request)} at {path}"
                 )
-            return RawResponse.model_validate_json(path.read_text())
+            return RawResponse.model_validate_json(path.read_text(encoding="utf-8"))
 
         # live: call through, record, return
         response = self._transport(request)
         self._fixtures_dir.mkdir(parents=True, exist_ok=True)
-        path.write_text(response.model_dump_json())
+        path.write_text(response.model_dump_json(), encoding="utf-8")
         return response
