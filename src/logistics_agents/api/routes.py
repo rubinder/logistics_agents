@@ -24,3 +24,42 @@ def register_routes(app: FastAPI) -> None:
         if decision is None:
             raise HTTPException(status_code=404, detail="decision not found")
         return decision.model_dump(mode="json")
+
+    from fastapi import Request
+
+    from logistics_agents.api.deps import get_llm
+    from logistics_agents.api.scenarios import SCENARIOS
+    from logistics_agents.orchestration.runner import run_pipeline
+    from logistics_agents.tracing.tracer import Tracer
+
+    @app.get("/scenarios")
+    def scenarios_list():
+        return {"scenarios": sorted(SCENARIOS)}
+
+    @app.post("/runs")
+    def trigger_run(
+        request: Request,
+        payload: dict,
+        conn=Depends(get_conn),
+        llm=Depends(get_llm),
+        settings=Depends(get_settings),
+    ):
+        scenario_id = payload.get("scenario_id")
+        if scenario_id not in SCENARIOS:
+            raise HTTPException(status_code=400, detail="unknown scenario_id")
+
+        client_ip = request.client.host if request.client else "unknown"
+        if not guards.rate_allows(conn, client_ip, settings.per_ip_daily, settings.global_daily):
+            raise HTTPException(status_code=429, detail="rate limit exceeded")
+        if not guards.budget_allows(conn, settings.budget_cap_usd):
+            raise HTTPException(status_code=402, detail="budget exhausted")
+
+        asn = SCENARIOS[scenario_id]
+        seq = repository.count_entries(conn, source_prefix="trigger:")
+        run_id = f"trigger-{scenario_id}-{seq}"
+        tracer = Tracer(run_id=run_id, conn=conn)
+        decision = run_pipeline(asn, conn, llm, model="claude-opus-4-8", run_id=run_id, tracer=tracer)
+
+        cost = sum(t.cost_usd for t in tracer.records)
+        repository.insert_budget_entry(conn, run_id, cost, f"trigger:{client_ip}")
+        return {"run_id": run_id, "decision": decision.model_dump(mode="json"), "cost_usd": cost}
