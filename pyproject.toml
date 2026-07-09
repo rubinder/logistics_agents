@@ -22,6 +22,9 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/logistics_agents"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/logistics_agents/data/schema.sql" = "logistics_agents/data/schema.sql"
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
