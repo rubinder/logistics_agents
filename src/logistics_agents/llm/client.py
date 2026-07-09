@@ -16,13 +16,15 @@ class LLMClient:
         system: str,
         user: str,
         output_type: type[BaseModel],
+        *,
+        max_tokens: int = 4096,
     ) -> StructuredResult:
-        request = LLMRequest(model=model, system=system, user=user, output_type=output_type)
-
+        request = LLMRequest(
+            model=model, system=system, user=user, output_type=output_type, max_tokens=max_tokens
+        )
         start = time.perf_counter()
         raw = self._transport(request)
         latency_ms = int((time.perf_counter() - start) * 1000)
-
         value = output_type.model_validate_json(raw.output_json)
         meta = CallMeta(
             model=raw.model,
@@ -30,5 +32,7 @@ class LLMClient:
             output_tokens=raw.output_tokens,
             cost_usd=cost_usd(raw.model, raw.input_tokens, raw.output_tokens),
             latency_ms=latency_ms,
+            cache_read_input_tokens=raw.cache_read_input_tokens,
+            cache_creation_input_tokens=raw.cache_creation_input_tokens,
         )
         return StructuredResult(value=value, meta=meta)

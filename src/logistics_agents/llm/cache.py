@@ -1,3 +1,4 @@
+import dataclasses
 import hashlib
 from pathlib import Path
 
@@ -9,9 +10,13 @@ class CacheMissError(Exception):
 
 
 def request_key(request: LLMRequest) -> str:
-    canonical = "\x00".join(
-        [request.model, request.system, request.user, request.schema_fingerprint()]
-    )
+    parts = []
+    for field in dataclasses.fields(request):
+        if field.name == "output_type":
+            parts.append(f"output_type={request.schema_fingerprint()}")
+        else:
+            parts.append(f"{field.name}={getattr(request, field.name)!r}")
+    canonical = "\x00".join(parts)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 

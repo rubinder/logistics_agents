@@ -27,8 +27,10 @@ def test_transport_maps_parse_response_to_raw_response():
     stub_client = _types.SimpleNamespace(
         messages=_types.SimpleNamespace(parse=fake_parse)
     )
-    transport = AnthropicTransport(client=stub_client, max_tokens=256)
-    req = LLMRequest(model="claude-haiku-4-5", system="sys", user="hi", output_type=Sentiment)
+    transport = AnthropicTransport(client=stub_client)
+    req = LLMRequest(
+        model="claude-haiku-4-5", system="sys", user="hi", output_type=Sentiment, max_tokens=256
+    )
 
     raw = transport(req)
 
@@ -45,17 +47,35 @@ def test_transport_maps_parse_response_to_raw_response():
     assert captured["output_format"] is Sentiment
 
 
+def test_none_parsed_output_raises():
+    import types as _t
+
+    def fake_parse(**kwargs):
+        return _t.SimpleNamespace(
+            parsed_output=None,
+            usage=_t.SimpleNamespace(input_tokens=1, output_tokens=0),
+            stop_reason="refusal",
+        )
+
+    stub = _t.SimpleNamespace(messages=_t.SimpleNamespace(parse=fake_parse))
+    transport = AnthropicTransport(client=stub)
+    req = LLMRequest(model="claude-haiku-4-5", system="s", user="u", output_type=Sentiment)
+    with pytest.raises(RuntimeError):
+        transport(req)
+
+
 @pytest.mark.skipif(
     not os.environ.get("ANTHROPIC_API_KEY"),
     reason="live Anthropic call requires ANTHROPIC_API_KEY",
 )
 def test_live_call_returns_validated_model():
-    transport = AnthropicTransport(max_tokens=256)
+    transport = AnthropicTransport()
     req = LLMRequest(
         model="claude-haiku-4-5",
         system="You classify sentiment. Respond only via the structured schema.",
         user="I love this product!",
         output_type=Sentiment,
+        max_tokens=256,
     )
     raw = transport(req)
     value = Sentiment.model_validate_json(raw.output_json)

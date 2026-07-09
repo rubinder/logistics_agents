@@ -36,6 +36,14 @@ def test_replay_miss_raises(make_request, tmp_path):
         replay(make_request())
 
 
+def test_key_varies_by_max_tokens(make_request):
+    import dataclasses
+
+    a = make_request()
+    b = dataclasses.replace(a, max_tokens=a.max_tokens + 1)
+    assert request_key(a) != request_key(b)
+
+
 def test_invalid_mode_raises(make_request, fake_transport_factory, tmp_path):
     transport, _ = fake_transport_factory()
     with pytest.raises(ValueError):

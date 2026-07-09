@@ -11,6 +11,7 @@ class LLMRequest:
     system: str
     user: str
     output_type: type[BaseModel]
+    max_tokens: int = 4096
 
     def schema_fingerprint(self) -> str:
         schema = json.dumps(self.output_type.model_json_schema(), sort_keys=True)
@@ -22,6 +23,8 @@ class RawResponse(BaseModel):
     input_tokens: int
     output_tokens: int
     model: str
+    cache_read_input_tokens: int = 0
+    cache_creation_input_tokens: int = 0
 
 
 class CallMeta(BaseModel):
@@ -30,6 +33,8 @@ class CallMeta(BaseModel):
     output_tokens: int
     cost_usd: float
     latency_ms: int
+    cache_read_input_tokens: int = 0
+    cache_creation_input_tokens: int = 0
 
 
 @dataclass
