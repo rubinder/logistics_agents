@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from fastapi import Depends, FastAPI, HTTPException
 
 from logistics_agents.api import guards
@@ -44,6 +46,14 @@ def register_routes(app: FastAPI) -> None:
         llm=Depends(get_llm),
         settings=Depends(get_settings),
     ):
+        """Run one demo scenario, guarded by rate + budget limits.
+
+        Hard spend bounds are the IP-independent global daily count cap and the
+        monthly budget cap. Per-IP limiting uses request.client.host and is
+        best-effort (behind a proxy/LB this needs trusted proxy-headers — a deploy
+        concern). The rate/budget check and the ledger write are not transactionally
+        atomic; the global daily count cap bounds worst-case concurrent spend.
+        """
         scenario_id = payload.get("scenario_id")
         if scenario_id not in SCENARIOS:
             raise HTTPException(status_code=400, detail="unknown scenario_id")
@@ -55,11 +65,16 @@ def register_routes(app: FastAPI) -> None:
             raise HTTPException(status_code=402, detail="budget exhausted")
 
         asn = SCENARIOS[scenario_id]
-        seq = repository.count_entries(conn, source_prefix="trigger:")
-        run_id = f"trigger-{scenario_id}-{seq}"
+        run_id = f"trigger-{scenario_id}-{uuid4().hex[:12]}"
         tracer = Tracer(run_id=run_id, conn=conn)
-        decision = run_pipeline(asn, conn, llm, model="claude-opus-4-8", run_id=run_id, tracer=tracer)
-
-        cost = sum(t.cost_usd for t in tracer.records)
-        repository.insert_budget_entry(conn, run_id, cost, f"trigger:{client_ip}")
-        return {"run_id": run_id, "decision": decision.model_dump(mode="json"), "cost_usd": cost}
+        try:
+            decision = run_pipeline(
+                asn, conn, llm, model="claude-opus-4-8", run_id=run_id, tracer=tracer
+            )
+        finally:
+            # Fail-closed: debit incurred spend even if the pipeline raised mid-run,
+            # so an erroring run cannot slip cost past the budget/rate guards.
+            spent = sum(t.cost_usd for t in tracer.records)
+            if spent > 0:
+                repository.insert_budget_entry(conn, run_id, spent, f"trigger:{client_ip}")
+        return {"run_id": run_id, "decision": decision.model_dump(mode="json"), "cost_usd": spent}
