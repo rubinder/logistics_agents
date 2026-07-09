@@ -272,7 +272,7 @@ git commit -m "feat: add domain enums, LineItem, PurchaseOrder, ShipmentNotifica
 
 ---
 
-### Task 3: Result models — InventoryState, CarrierStatus, Exception, Decision, TraceRecord
+### Task 3: Result models — InventoryState, CarrierStatus, ExceptionRecord, Decision, TraceRecord
 
 **Files:**
 - Modify: `src/logistics_agents/domain/models.py`
@@ -283,8 +283,8 @@ git commit -m "feat: add domain enums, LineItem, PurchaseOrder, ShipmentNotifica
 - Produces:
   - `models.InventoryState(sku: str, dc_id: str, on_hand: int, reserved: int, capacity: int)` with computed `available_capacity: int` property = `capacity - on_hand`.
   - `models.CarrierStatus(tracking_number: str, status: str, eta: AwareDatetime | None, delayed: bool)`.
-  - `models.Exception(type: ExceptionType, detail: str)`.
-  - `models.Decision(label: DecisionLabel, exceptions: list[Exception], recommended_actions: list[str], confidence: float in [0,1], reasoning: str)`.
+  - `models.ExceptionRecord(type: ExceptionType, detail: str)` — named `ExceptionRecord`, not `Exception`, to avoid shadowing the Python builtin.
+  - `models.Decision(label: DecisionLabel, exceptions: list[ExceptionRecord], recommended_actions: list[str], confidence: float in [0,1], reasoning: str)`.
   - `models.TraceRecord(run_id: str, node: str, input_json: str, output_json: str, latency_ms: int, tokens: int, cost_usd: float, model: str, created_at: AwareDatetime)`.
 
 Note: `AwareDatetime` enforces the tz-aware-UTC global constraint (added to `models.py` in the Task 2 review fix); Task 2's `expected_date`/`reported_date` already use it.
@@ -302,7 +302,7 @@ from logistics_agents.domain.enums import DecisionLabel, ExceptionType
 from logistics_agents.domain.models import (
     CarrierStatus,
     Decision,
-    Exception,
+    ExceptionRecord,
     InventoryState,
     TraceRecord,
 )
@@ -327,7 +327,7 @@ def test_decision_rejects_out_of_range_confidence():
 def test_decision_with_exceptions_round_trips():
     d = Decision(
         label=DecisionLabel.HOLD,
-        exceptions=[Exception(type=ExceptionType.QUANTITY_MISMATCH, detail="9 vs 10")],
+        exceptions=[ExceptionRecord(type=ExceptionType.QUANTITY_MISMATCH, detail="9 vs 10")],
         recommended_actions=["notify supplier"],
         confidence=0.8,
         reasoning="short by one unit",
@@ -392,14 +392,14 @@ class CarrierStatus(BaseModel):
     delayed: bool
 
 
-class Exception(BaseModel):
+class ExceptionRecord(BaseModel):
     type: ExceptionType
     detail: str
 
 
 class Decision(BaseModel):
     label: DecisionLabel
-    exceptions: list[Exception]
+    exceptions: list[ExceptionRecord]
     recommended_actions: list[str]
     confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str
@@ -435,7 +435,7 @@ Expected: PASS (all Task 2 + Task 3 tests).
 
 ```bash
 git add src/logistics_agents/domain/models.py tests/domain/test_models_results.py
-git commit -m "feat: add InventoryState, CarrierStatus, Exception, Decision, TraceRecord models"
+git commit -m "feat: add InventoryState, CarrierStatus, ExceptionRecord, Decision, TraceRecord models"
 ```
 
 ---
@@ -683,7 +683,7 @@ from logistics_agents.data import repository
 from logistics_agents.domain.enums import DecisionLabel, ExceptionType
 from logistics_agents.domain.models import (
     Decision,
-    Exception,
+    ExceptionRecord,
     InventoryState,
     LineItem,
     PurchaseOrder,
@@ -717,7 +717,7 @@ def test_inventory_round_trip(postgres_conn):
 def test_decision_round_trip(postgres_conn):
     decision = Decision(
         label=DecisionLabel.HOLD,
-        exceptions=[Exception(type=ExceptionType.QUANTITY_MISMATCH, detail="9 vs 10")],
+        exceptions=[ExceptionRecord(type=ExceptionType.QUANTITY_MISMATCH, detail="9 vs 10")],
         recommended_actions=["notify supplier"],
         confidence=0.8,
         reasoning="short by one",
@@ -1114,7 +1114,7 @@ git commit -m "feat: add Kafka producer/consumer wrappers for shipment notificat
 ## Self-Review
 
 **Spec coverage (Milestone 1 scope = spec §5 domain, §14 layout, milestone 15.1):**
-- Domain models (§5): `ShipmentNotification`, `PurchaseOrder`, `InventoryState`, `CarrierStatus`, `Exception`, `Decision`, `TraceRecord` — Tasks 2–3. ✅
+- Domain models (§5): `ShipmentNotification`, `PurchaseOrder`, `InventoryState`, `CarrierStatus`, `ExceptionRecord`, `Decision`, `TraceRecord` — Tasks 2–3. ✅
 - Exception taxonomy + decision labels (§5): Task 2 enums. ✅
 - Postgres tables (§5): `purchase_orders, inventory, shipments, carrier_events, decisions, runs, budget_ledger` — Task 4. ✅
 - Docker infra (§2, §11): docker-compose Postgres + Redpanda — Task 4. ✅

@@ -86,13 +86,13 @@ Each node emits a **trace record** (input, output, latency, tokens, cost, model)
 
 **Postgres tables:** `purchase_orders`, `inventory`, `shipments`, `carrier_events`, `decisions`, `runs` (traces), `budget_ledger`.
 
-**Pydantic models:** `ShipmentNotification` (ASN), `PurchaseOrder`, `InventoryState`, `CarrierStatus`, `Exception`, `Decision`, `TraceRecord`.
+**Pydantic models:** `ShipmentNotification` (ASN), `PurchaseOrder`, `InventoryState`, `CarrierStatus`, `ExceptionRecord`, `Decision`, `TraceRecord`.
 
 **Exception taxonomy (typed enum):** `QUANTITY_MISMATCH`, `LATE_DELIVERY`, `UNKNOWN_PO`, `OVERCAPACITY`, `MISSING_DOCS`, `DAMAGED`.
 
 **Decision labels:** `ACCEPT | HOLD | REROUTE | ESCALATE`.
 
-**`Decision` shape:** `{ label, exceptions: Exception[], recommended_actions: string[], confidence: float, reasoning: string }`. Emitted via Anthropic tool-use / structured output, validated by pydantic.
+**`Decision` shape:** `{ label, exceptions: ExceptionRecord[], recommended_actions: string[], confidence: float, reasoning: string }`. Emitted via Anthropic tool-use / structured output, validated by pydantic.
 
 ## 6. LLM wrapper & record/replay
 
