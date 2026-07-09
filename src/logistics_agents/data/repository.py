@@ -169,6 +169,29 @@ def insert_trace(conn: psycopg.Connection, trace: TraceRecord) -> None:
     conn.commit()
 
 
+def list_run_ids(conn) -> list[str]:
+    with conn.cursor() as cur:
+        cur.execute("SELECT run_id, MAX(created_at) AS ts FROM runs GROUP BY run_id ORDER BY ts DESC")
+        return [row[0] for row in cur.fetchall()]
+
+
+def get_traces(conn, run_id: str) -> list[TraceRecord]:
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT run_id, node, input_json, output_json, latency_ms, tokens, cost_usd, model, created_at "
+            "FROM runs WHERE run_id = %s ORDER BY created_at",
+            (run_id,),
+        )
+        rows = cur.fetchall()
+    return [
+        TraceRecord(
+            run_id=r[0], node=r[1], input_json=r[2], output_json=r[3], latency_ms=r[4],
+            tokens=r[5], cost_usd=r[6], model=r[7], created_at=r[8],
+        )
+        for r in rows
+    ]
+
+
 def insert_budget_entry(conn, run_id: str, cost_usd: float, source: str) -> None:
     with conn.cursor() as cur:
         cur.execute(
