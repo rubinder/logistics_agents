@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from pydantic import AwareDatetime, BaseModel, Field, computed_field
 
 from logistics_agents.domain.enums import DecisionLabel, ExceptionType
@@ -39,6 +37,7 @@ class InventoryState(BaseModel):
     @computed_field
     @property
     def available_capacity(self) -> int:
+        """Physical headroom: capacity minus on-hand. Does not net out `reserved`."""
         return self.capacity - self.on_hand
 
 

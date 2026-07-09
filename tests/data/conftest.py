@@ -17,4 +17,9 @@ def postgres_conn(postgres_container):
     with psycopg.connect(dsn) as conn:
         apply_schema(conn)
         yield conn
-        conn.rollback()
+        with conn.cursor() as cur:
+            cur.execute(
+                "TRUNCATE purchase_orders, inventory, shipments, "
+                "carrier_events, decisions, runs, budget_ledger RESTART IDENTITY CASCADE"
+            )
+        conn.commit()

@@ -45,3 +45,17 @@ def test_decision_round_trip(postgres_conn):
     )
     repository.insert_decision(postgres_conn, "RUN-1", "SH-1", decision)
     assert repository.get_decision(postgres_conn, "RUN-1") == decision
+
+
+def test_decision_isolation_allows_reused_run_id(postgres_conn):
+    # RUN-1 is also used by test_decision_round_trip; this passes only if the
+    # fixture truly clears committed rows between tests (no duplicate-PK leak).
+    decision = Decision(
+        label=DecisionLabel.ACCEPT,
+        exceptions=[],
+        recommended_actions=[],
+        confidence=1.0,
+        reasoning="clean",
+    )
+    repository.insert_decision(postgres_conn, "RUN-1", "SH-2", decision)
+    assert repository.get_decision(postgres_conn, "RUN-1") == decision
