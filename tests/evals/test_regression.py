@@ -7,8 +7,8 @@ from evals.results import check_regression, load_report
 from evals.run import run_comparison
 from logistics_agents.data import seed
 
-BASELINE_DIR = Path(__file__).resolve().parents[1] / "evals" / "baseline"
-FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "llm"
+BASELINE_DIR = Path(__file__).resolve().parents[2] / "evals" / "baseline"
+FIXTURES_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "llm"
 
 
 def _baseline_models():
