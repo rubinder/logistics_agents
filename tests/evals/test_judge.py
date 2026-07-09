@@ -32,3 +32,9 @@ def test_judge_score_bounds():
 
     with pytest.raises(ValidationError):
         JudgeScore(score=6, rationale="too high")
+
+
+def test_rubric_version_is_pinned_in_prompt():
+    from evals.graders.judge import JUDGE_SYSTEM, RUBRIC_VERSION
+
+    assert RUBRIC_VERSION in JUDGE_SYSTEM

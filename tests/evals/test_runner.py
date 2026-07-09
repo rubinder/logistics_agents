@@ -50,6 +50,11 @@ def test_run_eval_scores_every_case_and_aggregates(postgres_conn, scripted_trans
     assert report.mean_judge is None  # no judge llm passed
     assert report.mean_composite == 1.0
 
+    from evals.graders.judge import RUBRIC_VERSION
+    from evals.dataset import DATASET_VERSION
+    assert report.rubric_version == RUBRIC_VERSION
+    assert report.dataset_version == DATASET_VERSION
+
 
 def test_run_eval_with_judge_includes_judge_mean(postgres_conn, scripted_transport):
     from logistics_agents.data import seed

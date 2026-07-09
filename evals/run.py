@@ -1,5 +1,7 @@
 import argparse
 import os
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 import psycopg
@@ -14,6 +16,19 @@ from evals.results import write_report
 from evals.runner import EvalReport, run_eval
 
 DEFAULT_DSN = "postgresql://logistics:logistics@localhost:5432/logistics"
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _git_sha() -> str | None:
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+    except Exception:
+        return None
 
 
 def build_client(mode: str, fixtures_dir: Path) -> LLMClient:
@@ -41,6 +56,7 @@ def run_comparison(
             cases, conn, llm, model=model,
             judge_llm=judge_llm, judge_model=judge_model, persist_traces=True,
         )
+        report = report.model_copy(update={"timestamp": _now_iso(), "git_sha": _git_sha()})
         write_report(report, Path(out_dir))
         reports.append(report)
     return reports

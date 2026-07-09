@@ -2,10 +2,10 @@ from pydantic import BaseModel
 
 from logistics_agents.llm.client import LLMClient
 from logistics_agents.tracing.tracer import Tracer
-from evals.dataset import EvalCase
+from evals.dataset import DATASET_VERSION, EvalCase
 from evals.graders import composite
 from evals.graders.composite import CaseScore
-from evals.graders.judge import judge_reasoning
+from evals.graders.judge import RUBRIC_VERSION, judge_reasoning
 from logistics_agents.orchestration.runner import run_pipeline
 
 
@@ -24,6 +24,10 @@ class EvalReport(BaseModel):
     mean_action_coverage: float
     mean_judge: float | None
     mean_composite: float
+    rubric_version: str = RUBRIC_VERSION
+    dataset_version: str = DATASET_VERSION
+    timestamp: str | None = None
+    git_sha: str | None = None
 
 
 def run_eval(

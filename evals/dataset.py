@@ -5,6 +5,8 @@ from pydantic import BaseModel
 from logistics_agents.domain.enums import DecisionLabel, ExceptionType
 from logistics_agents.domain.models import LineItem, ShipmentNotification
 
+DATASET_VERSION = "dataset-v1"
+
 
 class ExpectedOutcome(BaseModel):
     label: DecisionLabel
