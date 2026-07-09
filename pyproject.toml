@@ -12,7 +12,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
-    "testcontainers[postgres]>=4.0",
+    "testcontainers[postgres,kafka]>=4.0",
 ]
 
 [build-system]
