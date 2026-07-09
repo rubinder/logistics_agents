@@ -1,0 +1,17 @@
+from enum import StrEnum
+
+
+class ExceptionType(StrEnum):
+    QUANTITY_MISMATCH = "QUANTITY_MISMATCH"
+    LATE_DELIVERY = "LATE_DELIVERY"
+    UNKNOWN_PO = "UNKNOWN_PO"
+    OVERCAPACITY = "OVERCAPACITY"
+    MISSING_DOCS = "MISSING_DOCS"
+    DAMAGED = "DAMAGED"
+
+
+class DecisionLabel(StrEnum):
+    ACCEPT = "ACCEPT"
+    HOLD = "HOLD"
+    REROUTE = "REROUTE"
+    ESCALATE = "ESCALATE"
