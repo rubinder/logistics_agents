@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 
 from logistics_agents.agents.contracts import OrchestrationPlan
-from logistics_agents.domain.models import ShipmentNotification, LineItem
 from logistics_agents.llm.types import CallMeta
 from logistics_agents.tracing.tracer import Tracer
 
@@ -27,7 +26,6 @@ def test_record_builds_trace_with_summed_tokens():
 
 
 def test_record_persists_when_conn_present(postgres_conn):
-    from logistics_agents.data import repository
 
     tracer = Tracer(run_id="RUN-P", conn=postgres_conn, clock=lambda: FIXED)
     plan = OrchestrationPlan(subtasks=["a"], reasoning="x")

@@ -2,10 +2,10 @@ import json
 
 from pydantic import BaseModel, Field
 
+from evals.dataset import EvalCase
 from logistics_agents.domain.models import Decision
 from logistics_agents.llm.client import LLMClient
 from logistics_agents.llm.types import StructuredResult
-from evals.dataset import EvalCase
 
 RUBRIC_VERSION = "judge-v1"
 

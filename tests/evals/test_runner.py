@@ -1,16 +1,14 @@
+from evals.dataset import CASES
+from evals.graders.judge import JudgeScore
+from evals.runner import run_eval
 from logistics_agents.agents.contracts import (
     CarrierFinding,
     ExceptionFinding,
     InventoryFinding,
     OrchestrationPlan,
-    QuantityDiscrepancy,
 )
-from logistics_agents.domain.enums import DecisionLabel, ExceptionType
 from logistics_agents.domain.models import Decision, ExceptionRecord
 from logistics_agents.llm.client import LLMClient
-from evals.dataset import CASES
-from evals.graders.judge import JudgeScore
-from evals.runner import run_eval
 
 
 def _pipeline_script_for(label, exc_types, actions):
@@ -50,8 +48,8 @@ def test_run_eval_scores_every_case_and_aggregates(postgres_conn, scripted_trans
     assert report.mean_judge is None  # no judge llm passed
     assert report.mean_composite == 1.0
 
-    from evals.graders.judge import RUBRIC_VERSION
     from evals.dataset import DATASET_VERSION
+    from evals.graders.judge import RUBRIC_VERSION
     assert report.rubric_version == RUBRIC_VERSION
     assert report.dataset_version == DATASET_VERSION
 
