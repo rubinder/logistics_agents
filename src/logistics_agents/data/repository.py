@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 import psycopg
 
@@ -166,3 +167,42 @@ def insert_trace(conn: psycopg.Connection, trace: TraceRecord) -> None:
             ),
         )
     conn.commit()
+
+
+def insert_budget_entry(conn, run_id: str, cost_usd: float, source: str) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO budget_ledger (run_id, cost_usd, source) VALUES (%s, %s, %s)",
+            (run_id, cost_usd, source),
+        )
+    conn.commit()
+
+
+def total_spend_usd(conn, since: datetime | None = None) -> float:
+    clause, params = ("WHERE created_at >= %s", (since,)) if since is not None else ("", ())
+    with conn.cursor() as cur:
+        cur.execute(f"SELECT COALESCE(SUM(cost_usd), 0) FROM budget_ledger {clause}", params)
+        return float(cur.fetchone()[0])
+
+
+def count_entries(
+    conn,
+    source: str | None = None,
+    source_prefix: str | None = None,
+    since: datetime | None = None,
+) -> int:
+    conditions = []
+    params: list = []
+    if source is not None:
+        conditions.append("source = %s")
+        params.append(source)
+    if source_prefix is not None:
+        conditions.append("source LIKE %s")
+        params.append(source_prefix + "%")
+    if since is not None:
+        conditions.append("created_at >= %s")
+        params.append(since)
+    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+    with conn.cursor() as cur:
+        cur.execute(f"SELECT COUNT(*) FROM budget_ledger {where}", params)
+        return int(cur.fetchone()[0])
