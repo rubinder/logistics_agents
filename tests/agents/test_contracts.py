@@ -47,3 +47,16 @@ def test_exception_finding_holds_typed_exceptions():
 def test_orchestration_plan_fields():
     p = OrchestrationPlan(subtasks=["inventory", "carrier", "exception"], reasoning="decompose")
     assert len(p.subtasks) == 3
+
+
+def test_scripted_transport_returns_mapped_value(scripted_transport):
+    from logistics_agents.llm.client import LLMClient
+
+    plan = OrchestrationPlan(subtasks=["x"], reasoning="y")
+    transport, calls = scripted_transport({OrchestrationPlan: plan})
+    client = LLMClient(transport)
+    result = client.complete_structured(
+        model="claude-haiku-4-5", system="s", user="u", output_type=OrchestrationPlan
+    )
+    assert result.value == plan
+    assert calls[0].model == "claude-haiku-4-5"
