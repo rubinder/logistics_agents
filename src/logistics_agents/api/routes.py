@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 
 from logistics_agents.api import guards
 from logistics_agents.api.deps import get_conn, get_settings
@@ -26,6 +27,17 @@ def register_routes(app: FastAPI) -> None:
         if decision is None:
             raise HTTPException(status_code=404, detail="decision not found")
         return decision.model_dump(mode="json")
+
+    @app.get("/runs/{run_id}/stream")
+    def run_stream(run_id: str, conn=Depends(get_conn)):
+        traces = repository.get_traces(conn, run_id)
+
+        def event_gen():
+            for t in traces:
+                yield f"event: {t.node}\ndata: {t.model_dump_json()}\n\n"
+            yield "event: done\ndata: {}\n\n"
+
+        return StreamingResponse(event_gen(), media_type="text/event-stream")
 
     from fastapi import Request
 
