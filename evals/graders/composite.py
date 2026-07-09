@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
-from logistics_agents.domain.models import Decision
 from evals.dataset import ExpectedOutcome
 from evals.graders import deterministic
 from evals.graders.judge import JudgeScore
+from logistics_agents.domain.models import Decision
 
 _W_LABEL = 0.4
 _W_F1 = 0.3

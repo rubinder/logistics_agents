@@ -1,6 +1,6 @@
+from evals.dataset import CASES, EvalCase, ExpectedOutcome
 from logistics_agents.domain.enums import DecisionLabel, ExceptionType
 from logistics_agents.domain.models import ShipmentNotification
-from evals.dataset import CASES, EvalCase, ExpectedOutcome
 
 
 def test_cases_are_well_formed_and_unique():
@@ -32,8 +32,8 @@ def test_at_least_one_clean_accept():
 
 
 def test_non_late_cases_avoid_the_delayed_tracking_number():
-    from logistics_agents.domain.enums import ExceptionType
     from logistics_agents.data.seed_data import SEED_CARRIER_EVENTS
+    from logistics_agents.domain.enums import ExceptionType
 
     delayed_tns = {ev["tracking_number"] for ev in SEED_CARRIER_EVENTS if ev["delayed"]}
     for c in CASES:

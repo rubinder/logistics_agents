@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from logistics_agents.agents import inventory
 from logistics_agents.agents.contracts import InventoryFinding, QuantityDiscrepancy
-from logistics_agents.data import repository, seed
+from logistics_agents.data import seed
 from logistics_agents.domain.models import LineItem, ShipmentNotification
 from logistics_agents.llm.client import LLMClient
 

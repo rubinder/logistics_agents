@@ -14,14 +14,17 @@ def test_build_client_returns_llm_client(tmp_path):
 
 def test_run_comparison_scores_each_model_with_scripted_clients(postgres_conn, scripted_transport, tmp_path):
     # Inject scripted clients directly (bypass the Anthropic transport) to keep this key-free.
+    from evals.dataset import CASES
     from logistics_agents.agents.contracts import (
-        CarrierFinding, ExceptionFinding, InventoryFinding, OrchestrationPlan,
+        CarrierFinding,
+        ExceptionFinding,
+        InventoryFinding,
+        OrchestrationPlan,
     )
+    from logistics_agents.data import seed
     from logistics_agents.domain.enums import DecisionLabel
     from logistics_agents.domain.models import Decision
     from logistics_agents.llm.client import LLMClient
-    from logistics_agents.data import seed
-    from evals.dataset import CASES
 
     seed.load_seed(postgres_conn)
     clean = next(c for c in CASES if c.case_id == "clean-accept")
@@ -50,9 +53,10 @@ def test_run_comparison_scores_each_model_with_scripted_clients(postgres_conn, s
 @pytest.mark.skipif(not os.environ.get("ANTHROPIC_API_KEY"), reason="live comparison needs ANTHROPIC_API_KEY")
 def test_live_smoke_single_case(postgres_conn):
     # Records fixtures + does one real call per node for one case on the cheapest model.
-    from logistics_agents.data import seed
-    from evals.dataset import CASES
     import tempfile
+
+    from evals.dataset import CASES
+    from logistics_agents.data import seed
 
     seed.load_seed(postgres_conn)
     clean = next(c for c in CASES if c.case_id == "clean-accept")
