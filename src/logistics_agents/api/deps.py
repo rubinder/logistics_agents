@@ -10,6 +10,7 @@ class Settings(BaseModel):
     budget_cap_usd: float = 20.0
     per_ip_daily: int = 5
     global_daily: int = 50
+    trigger_model: str = "claude-haiku-4-5"
 
 
 def get_settings() -> Settings:

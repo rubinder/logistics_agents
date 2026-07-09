@@ -81,12 +81,12 @@ def register_routes(app: FastAPI) -> None:
         tracer = Tracer(run_id=run_id, conn=conn)
         try:
             decision = run_pipeline(
-                asn, conn, llm, model="claude-opus-4-8", run_id=run_id, tracer=tracer
+                asn, conn, llm, model=settings.trigger_model, run_id=run_id, tracer=tracer
             )
         finally:
-            # Fail-closed: debit incurred spend even if the pipeline raised mid-run,
-            # so an erroring run cannot slip cost past the budget/rate guards.
+            # Fail-closed: always debit an accepted run (even $0 / partial cost on a
+            # raise) so every accepted request counts toward the rate cap and no
+            # incurred spend escapes the budget guard.
             spent = sum(t.cost_usd for t in tracer.records)
-            if spent > 0:
-                repository.insert_budget_entry(conn, run_id, spent, f"trigger:{client_ip}")
+            repository.insert_budget_entry(conn, run_id, spent, f"trigger:{client_ip}")
         return {"run_id": run_id, "decision": decision.model_dump(mode="json"), "cost_usd": spent}

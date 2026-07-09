@@ -82,3 +82,50 @@ def test_trigger_records_spend_even_when_pipeline_raises(postgres_conn):
     # Spend from the orchestrator + inventory nodes was still debited to the ledger.
     assert repository.count_entries(postgres_conn, source_prefix="trigger:") == 1
     assert repository.total_spend_usd(postgres_conn) > 0
+
+
+def test_zero_cost_accepted_run_still_counts_toward_rate(postgres_conn):
+    from fastapi.testclient import TestClient
+
+    from logistics_agents.agents.contracts import (
+        CarrierFinding,
+        ExceptionFinding,
+        InventoryFinding,
+        OrchestrationPlan,
+    )
+    from logistics_agents.api.app import create_app
+    from logistics_agents.api.deps import Settings, get_conn, get_llm, get_settings
+    from logistics_agents.data import repository, seed
+    from logistics_agents.domain.enums import DecisionLabel
+    from logistics_agents.domain.models import Decision
+    from logistics_agents.llm.client import LLMClient
+    from logistics_agents.llm.types import RawResponse
+
+    seed.load_seed(postgres_conn)
+    script = {
+        OrchestrationPlan: OrchestrationPlan(subtasks=["x"], reasoning="d"),
+        InventoryFinding: InventoryFinding(po_matched=True, discrepancies=[], capacity_ok=True, reasoning="i"),
+        CarrierFinding: CarrierFinding(status="in_transit", eta=None, delayed=False, reasoning="c"),
+        ExceptionFinding: ExceptionFinding(exceptions=[], reasoning="e"),
+        Decision: Decision(label=DecisionLabel.ACCEPT, exceptions=[], recommended_actions=[], confidence=0.9, reasoning="r"),
+    }
+
+    def zero_cost_transport(request):
+        # 0 tokens -> cost_usd == 0 for every node
+        return RawResponse(
+            output_json=script[request.output_type].model_dump_json(),
+            input_tokens=0, output_tokens=0, model=request.model,
+        )
+
+    app = create_app()
+    app.dependency_overrides[get_conn] = lambda: postgres_conn
+    app.dependency_overrides[get_llm] = lambda: LLMClient(zero_cost_transport)
+    app.dependency_overrides[get_settings] = lambda: Settings(budget_cap_usd=1.0, per_ip_daily=5, global_daily=50)
+    client = TestClient(app)
+
+    r = client.post("/runs", json={"scenario_id": "clean"})
+    assert r.status_code == 200
+    assert r.json()["cost_usd"] == 0.0
+    # A zero-cost accepted run still writes exactly one trigger: ledger row (counts toward rate).
+    assert repository.count_entries(postgres_conn, source_prefix="trigger:") == 1
+    assert repository.total_spend_usd(postgres_conn) == 0.0
