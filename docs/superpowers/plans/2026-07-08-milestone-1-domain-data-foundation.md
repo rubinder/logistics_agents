@@ -282,10 +282,12 @@ git commit -m "feat: add domain enums, LineItem, PurchaseOrder, ShipmentNotifica
 - Consumes: `enums.ExceptionType`, `enums.DecisionLabel`, `models.LineItem` (Task 2).
 - Produces:
   - `models.InventoryState(sku: str, dc_id: str, on_hand: int, reserved: int, capacity: int)` with computed `available_capacity: int` property = `capacity - on_hand`.
-  - `models.CarrierStatus(tracking_number: str, status: str, eta: datetime | None, delayed: bool)`.
+  - `models.CarrierStatus(tracking_number: str, status: str, eta: AwareDatetime | None, delayed: bool)`.
   - `models.Exception(type: ExceptionType, detail: str)`.
   - `models.Decision(label: DecisionLabel, exceptions: list[Exception], recommended_actions: list[str], confidence: float in [0,1], reasoning: str)`.
-  - `models.TraceRecord(run_id: str, node: str, input_json: str, output_json: str, latency_ms: int, tokens: int, cost_usd: float, model: str, created_at: datetime)`.
+  - `models.TraceRecord(run_id: str, node: str, input_json: str, output_json: str, latency_ms: int, tokens: int, cost_usd: float, model: str, created_at: AwareDatetime)`.
+
+Note: `AwareDatetime` enforces the tz-aware-UTC global constraint (added to `models.py` in the Task 2 review fix); Task 2's `expected_date`/`reported_date` already use it.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -386,7 +388,7 @@ class InventoryState(BaseModel):
 class CarrierStatus(BaseModel):
     tracking_number: str
     status: str
-    eta: datetime | None
+    eta: AwareDatetime | None
     delayed: bool
 
 
@@ -412,14 +414,14 @@ class TraceRecord(BaseModel):
     tokens: int = Field(ge=0)
     cost_usd: float = Field(ge=0.0)
     model: str
-    created_at: datetime
+    created_at: AwareDatetime
 ```
 
-Note: move the `from pydantic import ...` and `from logistics_agents.domain.enums import ...` lines to the top of the file with the existing imports (do not leave mid-file imports). Final top-of-file imports should read:
+Note: move the `from pydantic import ...` and `from logistics_agents.domain.enums import ...` lines to the top of the file with the existing imports (do not leave mid-file imports). The Task 2 review fix already added `AwareDatetime` to the pydantic import — keep it and add `computed_field`. Final top-of-file imports should read:
 ```python
 from datetime import datetime
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import AwareDatetime, BaseModel, Field, computed_field
 
 from logistics_agents.domain.enums import DecisionLabel, ExceptionType
 ```
