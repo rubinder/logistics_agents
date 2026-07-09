@@ -19,7 +19,11 @@ def _baseline_models():
 
 @pytest.mark.skipif(
     not _baseline_models(),
-    reason="no committed eval baseline yet — record one with `python -m evals.run --mode live`",
+    reason=(
+        "no committed eval baseline yet — record a live run "
+        "(`python -m evals.run --mode live`), then copy the produced "
+        "evals/results/<model>.json to evals/baseline/<model>.json and commit it"
+    ),
 )
 def test_replay_matches_baseline_no_regression(postgres_conn, tmp_path):
     seed.load_seed(postgres_conn)
