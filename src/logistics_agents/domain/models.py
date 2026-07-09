@@ -49,14 +49,14 @@ class CarrierStatus(BaseModel):
     delayed: bool
 
 
-class Exception(BaseModel):
+class ExceptionRecord(BaseModel):
     type: ExceptionType
     detail: str
 
 
 class Decision(BaseModel):
     label: DecisionLabel
-    exceptions: list[Exception]
+    exceptions: list[ExceptionRecord]
     recommended_actions: list[str]
     confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str

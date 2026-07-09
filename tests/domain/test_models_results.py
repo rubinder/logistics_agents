@@ -7,7 +7,7 @@ from logistics_agents.domain.enums import DecisionLabel, ExceptionType
 from logistics_agents.domain.models import (
     CarrierStatus,
     Decision,
-    Exception,
+    ExceptionRecord,
     InventoryState,
     TraceRecord,
 )
@@ -32,7 +32,7 @@ def test_decision_rejects_out_of_range_confidence():
 def test_decision_with_exceptions_round_trips():
     d = Decision(
         label=DecisionLabel.HOLD,
-        exceptions=[Exception(type=ExceptionType.QUANTITY_MISMATCH, detail="9 vs 10")],
+        exceptions=[ExceptionRecord(type=ExceptionType.QUANTITY_MISMATCH, detail="9 vs 10")],
         recommended_actions=["notify supplier"],
         confidence=0.8,
         reasoning="short by one unit",
