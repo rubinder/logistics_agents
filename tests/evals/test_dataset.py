@@ -29,3 +29,16 @@ def test_dataset_covers_key_exception_types():
 def test_at_least_one_clean_accept():
     accepts = [c for c in CASES if c.expected.label is DecisionLabel.ACCEPT and not c.expected.exception_types]
     assert accepts, "dataset must include a clean ACCEPT case"
+
+
+def test_non_late_cases_avoid_the_delayed_tracking_number():
+    from logistics_agents.domain.enums import ExceptionType
+    from logistics_agents.data.seed_data import SEED_CARRIER_EVENTS
+
+    delayed_tns = {ev["tracking_number"] for ev in SEED_CARRIER_EVENTS if ev["delayed"]}
+    for c in CASES:
+        if ExceptionType.LATE_DELIVERY not in c.expected.exception_types:
+            assert c.asn.tracking_number not in delayed_tns, (
+                f"case {c.case_id} expects no LATE_DELIVERY but uses a seeded-delayed "
+                f"tracking number {c.asn.tracking_number}"
+            )

@@ -69,7 +69,7 @@ CASES: list[EvalCase] = [
     ),
     EvalCase(
         case_id="missing-docs",
-        asn=_asn("SH-DOCS", "PO-1002", "1Z-1002", [("SKU-B", 50)], _ON_TIME, docs_present=False),
+        asn=_asn("SH-DOCS", "PO-1002", "1Z-1001", [("SKU-B", 50), ("SKU-C", 25)], _ON_TIME, docs_present=False),
         expected=ExpectedOutcome(
             label=DecisionLabel.HOLD,
             exception_types=[ExceptionType.MISSING_DOCS],
@@ -78,7 +78,7 @@ CASES: list[EvalCase] = [
     ),
     EvalCase(
         case_id="damaged",
-        asn=_asn("SH-DMG", "PO-1002", "1Z-1002", [("SKU-B", 50)], _ON_TIME, damaged=True),
+        asn=_asn("SH-DMG", "PO-1002", "1Z-1001", [("SKU-B", 50), ("SKU-C", 25)], _ON_TIME, damaged=True),
         expected=ExpectedOutcome(
             label=DecisionLabel.REROUTE,
             exception_types=[ExceptionType.DAMAGED],
