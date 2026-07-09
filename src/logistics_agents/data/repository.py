@@ -3,11 +3,13 @@ import json
 import psycopg
 
 from logistics_agents.domain.models import (
+    CarrierStatus,
     Decision,
     ExceptionRecord,
     InventoryState,
     LineItem,
     PurchaseOrder,
+    TraceRecord,
 )
 
 
@@ -121,3 +123,46 @@ def get_decision(conn: psycopg.Connection, run_id: str) -> Decision | None:
         confidence=row[3],
         reasoning=row[4],
     )
+
+
+def insert_carrier_event(
+    conn: psycopg.Connection, tracking_number, event_type, status, eta, delayed, event_time
+) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO carrier_events (tracking_number, event_type, status, eta, delayed, event_time)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            (tracking_number, event_type, status, eta, delayed, event_time),
+        )
+    conn.commit()
+
+
+def get_latest_carrier_event(conn: psycopg.Connection, tracking_number: str) -> CarrierStatus | None:
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT tracking_number, status, eta, delayed FROM carrier_events "
+            "WHERE tracking_number = %s ORDER BY event_time DESC LIMIT 1",
+            (tracking_number,),
+        )
+        row = cur.fetchone()
+    if row is None:
+        return None
+    return CarrierStatus(tracking_number=row[0], status=row[1], eta=row[2], delayed=row[3])
+
+
+def insert_trace(conn: psycopg.Connection, trace: TraceRecord) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO runs
+                (run_id, node, input_json, output_json, latency_ms, tokens, cost_usd, model, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                trace.run_id, trace.node, trace.input_json, trace.output_json,
+                trace.latency_ms, trace.tokens, trace.cost_usd, trace.model, trace.created_at,
+            ),
+        )
+    conn.commit()
