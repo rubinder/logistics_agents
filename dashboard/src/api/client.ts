@@ -80,18 +80,44 @@ export class Api {
     });
   }
 
-  getTrace(runId: string): Promise<TraceRecord[]> {
-    return this.withFallback(
-      () => this.getJson<TraceRecord[]>(`/runs/${runId}/trace`),
-      FIXTURE_TRACES,
-    );
+  /**
+   * Per-run reads (this and `getDecision`) intentionally do NOT use
+   * `withFallback`: on a live backend, a transient error here must surface
+   * as an error, not silently swap in another run's fixture trace/decision
+   * while the UI still claims "Live". Fixtures are only served in explicit
+   * fixtures mode (VITE_USE_FIXTURES=1).
+   */
+  async getTrace(runId: string): Promise<TraceRecord[]> {
+    if (import.meta.env.VITE_USE_FIXTURES === "1") {
+      this.usingFixtures = true;
+      return FIXTURE_TRACES;
+    }
+    const result = await this.getJson<TraceRecord[]>(`/runs/${runId}/trace`);
+    this.usingFixtures = false;
+    return result;
   }
 
-  getDecision(runId: string): Promise<Decision> {
-    return this.withFallback(
-      () => this.getJson<Decision>(`/runs/${runId}/decision`),
-      FIXTURE_DECISION,
-    );
+  /**
+   * Returns `null` on a 404 (a legitimate "no decision persisted yet" for a
+   * still-running or not-yet-decided run). Any other error (non-OK, non-404
+   * response, or network failure) throws rather than falling back to a
+   * fixture decision.
+   */
+  async getDecision(runId: string): Promise<Decision | null> {
+    if (import.meta.env.VITE_USE_FIXTURES === "1") {
+      this.usingFixtures = true;
+      return FIXTURE_DECISION;
+    }
+    const response = await fetch(`${this.baseUrl}/runs/${runId}/decision`);
+    if (response.status === 404) {
+      this.usingFixtures = false;
+      return null;
+    }
+    if (!response.ok) {
+      throw new Error(`request to /runs/${runId}/decision failed: ${response.status}`);
+    }
+    this.usingFixtures = false;
+    return (await response.json()) as Decision;
   }
 
   getBudget(): Promise<BudgetStatus> {

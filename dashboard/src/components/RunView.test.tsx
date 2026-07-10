@@ -26,9 +26,6 @@ describe("RunView", () => {
   const originalMatchMedia = window.matchMedia;
 
   beforeEach(() => {
-    // No network in tests: fetch always rejects, so the Api's fixture
-    // fallback kicks in for every call (getTrace, getDecision, ...).
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error("no network in tests"));
     mockReducedMotion();
   });
 
@@ -36,9 +33,15 @@ describe("RunView", () => {
     globalThis.fetch = originalFetch;
     window.matchMedia = originalMatchMedia;
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it("replays the fixture trace onto the rail and shows the decision", async () => {
+    // Explicit fixtures mode: getTrace/getDecision serve bundled fixture
+    // data deterministically, rather than relying on a rejected fetch to
+    // trigger a (now-removed) per-run fixture fallback.
+    vi.stubEnv("VITE_USE_FIXTURES", "1");
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error("no network in tests"));
     const api = new Api("");
     render(<RunView runId={FIXTURE_RUN_ID} api={api} />);
 
@@ -55,5 +58,17 @@ describe("RunView", () => {
     const api = new Api("");
     render(<RunView runId={null} api={api} />);
     expect(screen.getByText(/select a run/i)).toBeInTheDocument();
+  });
+
+  it("shows an honest error state (not fixture data) when a live getTrace fails", async () => {
+    // Live mode (no VITE_USE_FIXTURES): a rejecting fetch must surface as an
+    // error, never as a silently-substituted fixture trace/decision.
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error("network down"));
+    const api = new Api("");
+    render(<RunView runId={FIXTURE_RUN_ID} api={api} />);
+
+    expect(await screen.findByText(/couldn.t load this run.s trace/i)).toBeInTheDocument();
+    expect(screen.queryByText(/orchestrator/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 });

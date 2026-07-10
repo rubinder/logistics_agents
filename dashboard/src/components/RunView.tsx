@@ -26,12 +26,20 @@ function formatUsd(value: number): string {
  * selected run.
  */
 export function RunView({ runId, api }: RunViewProps) {
-  const { traces, decision } = useRunStream(runId, api);
+  const { traces, decision, error } = useRunStream(runId, api);
 
   if (!runId) {
     return (
       <div className="run-view run-view--empty panel">
         <p>Select a run from the board to watch it replay.</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="run-view run-view--empty panel">
+        <p>Couldn&apos;t load this run&apos;s trace.</p>
       </div>
     );
   }
