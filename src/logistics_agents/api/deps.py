@@ -14,7 +14,13 @@ class Settings(BaseModel):
 
 
 def get_settings() -> Settings:
-    return Settings()
+    defaults = Settings()
+    return Settings(
+        budget_cap_usd=float(os.environ.get("LOGISTICS_BUDGET_CAP_USD", defaults.budget_cap_usd)),
+        per_ip_daily=int(os.environ.get("LOGISTICS_PER_IP_DAILY", defaults.per_ip_daily)),
+        global_daily=int(os.environ.get("LOGISTICS_GLOBAL_DAILY", defaults.global_daily)),
+        trigger_model=os.environ.get("LOGISTICS_TRIGGER_MODEL", defaults.trigger_model),
+    )
 
 
 def get_conn():

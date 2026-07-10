@@ -140,6 +140,12 @@ def insert_carrier_event(
     conn.commit()
 
 
+def count_carrier_events(conn: psycopg.Connection) -> int:
+    with conn.cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM carrier_events")
+        return int(cur.fetchone()[0])
+
+
 def get_latest_carrier_event(conn: psycopg.Connection, tracking_number: str) -> CarrierStatus | None:
     with conn.cursor() as cur:
         cur.execute(
