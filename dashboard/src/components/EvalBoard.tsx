@@ -47,7 +47,7 @@ export function EvalBoard({ reports }: EvalBoardProps) {
               <div className="eval-board-bars">
                 <MetricBar label="Composite" value={report.mean_composite} tone="cyan" />
                 <MetricBar label="Label accuracy" value={report.label_accuracy} tone="muted" />
-                <MetricBar label="Mean F1" value={report.mean_f1} tone="reroute" />
+                <MetricBar label="Mean F1" value={report.mean_f1} tone="muted" />
               </div>
             </li>
           ))}
