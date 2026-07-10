@@ -27,3 +27,17 @@ jobs:
 
       - name: Test (deterministic, key-free; testcontainers uses the runner's Docker)
         run: uv run pytest -q
+
+  dashboard:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm ci
+      - run: npm run test -- --run
+      - run: npm run build
