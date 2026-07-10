@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import "./TriggerPanel.css";
 
+import { TriggerError } from "../api/client";
 import type { Api } from "../api/client";
 import type { BudgetStatus } from "../api/types";
 
@@ -50,7 +51,16 @@ export function TriggerPanel({ api, scenarios, budget, onTriggered }: TriggerPan
       const result = await api.triggerRun(scenarioId);
       onTriggered(result.run_id);
     } catch (err) {
-      setError(err instanceof Error ? friendlyMessage(err.message) : "Dispatch failed. Please try again.");
+      if (err instanceof TriggerError) {
+        // The API's own rejection detail (e.g. "budget exhausted",
+        // "rate limit exceeded") is already operator-facing - surface it
+        // directly rather than remapping it.
+        setError(err.message);
+      } else if (err instanceof Error) {
+        setError(friendlyMessage(err.message));
+      } else {
+        setError("Dispatch failed. Please try again.");
+      }
     } finally {
       setPending(false);
     }

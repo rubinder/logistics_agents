@@ -10,6 +10,7 @@ import {
   FIXTURE_RUN_ID,
   FIXTURE_SCENARIOS,
   FIXTURE_TRACES,
+  FIXTURE_TRIGGER_RESULT,
 } from "./fixtures";
 import type {
   BudgetStatus,
@@ -20,6 +21,20 @@ import type {
   TraceRecord,
   TriggerResult,
 } from "./types";
+
+/**
+ * Thrown by `Api.triggerRun` when a live POST /runs rejects (e.g. 402 budget
+ * exhausted, 429 rate limited, 400 unknown scenario). `message` is the API's
+ * `detail` string, suitable for direct display in the UI.
+ */
+export class TriggerError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "TriggerError";
+    this.status = status;
+  }
+}
 
 export class Api {
   private readonly baseUrl: string;
@@ -90,23 +105,36 @@ export class Api {
     );
   }
 
-  triggerRun(scenarioId: string): Promise<TriggerResult> {
-    const fixture: TriggerResult = {
-      run_id: FIXTURE_RUN_ID,
-      decision: FIXTURE_DECISION,
-      cost_usd: FIXTURE_BUDGET.spent_usd,
-    };
-    return this.withFallback(async () => {
-      const response = await fetch(`${this.baseUrl}/runs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scenario_id: scenarioId }),
-      });
-      if (!response.ok) {
-        throw new Error(`trigger run failed: ${response.status}`);
+  /**
+   * POST /runs is a mutating, budget-gated dispatch: unlike the read
+   * endpoints, it must NOT silently fall back to fixture "success" when a
+   * live backend rejects it (402 budget exhausted, 429 rate limited, ...).
+   * Only in explicit fixtures mode (VITE_USE_FIXTURES=1) does it return
+   * fixture data; otherwise real errors propagate as `TriggerError` so the
+   * UI can show the rejection instead of dispatching a fabricated run id.
+   */
+  async triggerRun(scenarioId: string): Promise<TriggerResult> {
+    if (import.meta.env.VITE_USE_FIXTURES === "1") {
+      this.usingFixtures = true;
+      return FIXTURE_TRIGGER_RESULT;
+    }
+    const response = await fetch(`${this.baseUrl}/runs`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ scenario_id: scenarioId }),
+    });
+    if (!response.ok) {
+      let detail = `Dispatch failed (${response.status})`;
+      try {
+        const body = await response.json();
+        if (body && typeof body.detail === "string") detail = body.detail;
+      } catch {
+        /* keep the default message */
       }
-      return (await response.json()) as TriggerResult;
-    }, fixture);
+      throw new TriggerError(response.status, detail);
+    }
+    this.usingFixtures = false;
+    return (await response.json()) as TriggerResult;
   }
 
   /**

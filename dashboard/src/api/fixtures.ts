@@ -9,6 +9,7 @@ import type {
   RunSummary,
   ScenarioListResponse,
   TraceRecord,
+  TriggerResult,
 } from "./types";
 
 export const FIXTURE_RUN_ID = "trigger-quantity-mismatch-a1b2c3d4e5f6";
@@ -138,6 +139,14 @@ export const FIXTURE_BUDGET: BudgetStatus = {
 
 export const FIXTURE_SCENARIOS: ScenarioListResponse = {
   scenarios: ["clean", "quantity-mismatch"],
+};
+
+// POST /runs fixture result, used only in explicit fixtures mode
+// (VITE_USE_FIXTURES=1) - live dispatch calls never fall back to this.
+export const FIXTURE_TRIGGER_RESULT: TriggerResult = {
+  run_id: FIXTURE_RUN_ID,
+  decision: FIXTURE_DECISION,
+  cost_usd: 0.036,
 };
 
 function caseResult(model: string, caseId: string, label: string, composite: number): CaseResult {
