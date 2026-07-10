@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 import psycopg
 
@@ -166,3 +167,65 @@ def insert_trace(conn: psycopg.Connection, trace: TraceRecord) -> None:
             ),
         )
     conn.commit()
+
+
+def list_run_ids(conn) -> list[str]:
+    with conn.cursor() as cur:
+        cur.execute("SELECT run_id, MAX(created_at) AS ts FROM runs GROUP BY run_id ORDER BY ts DESC")
+        return [row[0] for row in cur.fetchall()]
+
+
+def get_traces(conn, run_id: str) -> list[TraceRecord]:
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT run_id, node, input_json, output_json, latency_ms, tokens, cost_usd, model, created_at "
+            "FROM runs WHERE run_id = %s ORDER BY created_at",
+            (run_id,),
+        )
+        rows = cur.fetchall()
+    return [
+        TraceRecord(
+            run_id=r[0], node=r[1], input_json=r[2], output_json=r[3], latency_ms=r[4],
+            tokens=r[5], cost_usd=r[6], model=r[7], created_at=r[8],
+        )
+        for r in rows
+    ]
+
+
+def insert_budget_entry(conn, run_id: str, cost_usd: float, source: str) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO budget_ledger (run_id, cost_usd, source) VALUES (%s, %s, %s)",
+            (run_id, cost_usd, source),
+        )
+    conn.commit()
+
+
+def total_spend_usd(conn, since: datetime | None = None) -> float:
+    clause, params = ("WHERE created_at >= %s", (since,)) if since is not None else ("", ())
+    with conn.cursor() as cur:
+        cur.execute(f"SELECT COALESCE(SUM(cost_usd), 0) FROM budget_ledger {clause}", params)
+        return float(cur.fetchone()[0])
+
+
+def count_entries(
+    conn,
+    source: str | None = None,
+    source_prefix: str | None = None,
+    since: datetime | None = None,
+) -> int:
+    conditions = []
+    params: list = []
+    if source is not None:
+        conditions.append("source = %s")
+        params.append(source)
+    if source_prefix is not None:
+        conditions.append("source LIKE %s")
+        params.append(source_prefix + "%")
+    if since is not None:
+        conditions.append("created_at >= %s")
+        params.append(since)
+    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+    with conn.cursor() as cur:
+        cur.execute(f"SELECT COUNT(*) FROM budget_ledger {where}", params)
+        return int(cur.fetchone()[0])
