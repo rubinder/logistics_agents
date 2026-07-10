@@ -3,8 +3,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
 
 import { Api } from "./api/client";
-import { FIXTURE_BUDGET } from "./api/fixtures";
-import type { BudgetStatus } from "./api/types";
+import { FIXTURE_BUDGET, FIXTURE_EVAL_REPORTS } from "./api/fixtures";
+import type { BudgetStatus, EvalReport } from "./api/types";
+import { EvalBoard } from "./components/EvalBoard";
 import { RunsBoard } from "./components/RunsBoard";
 import { RunView } from "./components/RunView";
 import { Shell } from "./components/Shell";
@@ -24,6 +25,7 @@ export default function App() {
   const [runIds, setRunIds] = useState<string[]>([]);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [usingFixtures, setUsingFixtures] = useState(false);
+  const [evalReports, setEvalReports] = useState<EvalReport[]>(FIXTURE_EVAL_REPORTS);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,6 +42,15 @@ export default function App() {
       setRunIds(runList.run_ids);
       setUsingFixtures(api.usingFixtures);
       setSelectedRunId((current) => current ?? runList.run_ids[0] ?? null);
+
+      // Fetched separately from the above: getEvalReports() always falls
+      // back to fixture data (there is no live eval endpoint yet), and
+      // `api.usingFixtures` is a single shared flag, so folding this into
+      // the Promise.all above would permanently flip the live/sample-data
+      // badge to "Sample Data" even when the other endpoints are live.
+      const evalReportList = await api.getEvalReports();
+      if (cancelled) return;
+      setEvalReports(evalReportList);
     }
 
     void load();
@@ -72,6 +83,9 @@ export default function App() {
           <RunView runId={selectedRunId} api={api} />
         </section>
       </div>
+      <section className="app-eval-section">
+        <EvalBoard reports={evalReports} />
+      </section>
     </Shell>
   );
 }
