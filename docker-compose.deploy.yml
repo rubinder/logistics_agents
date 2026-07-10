@@ -13,17 +13,10 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  redpanda:
-    image: redpandadata/redpanda:v24.1.1
-    command:
-      - redpanda
-      - start
-      - --smp=1
-      - --overprovisioned
-      - --node-id=0
-      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
-      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092
-
+  # Note: the deployed API runs the pipeline synchronously and does not consume
+  # Kafka in the request path, so Redpanda is intentionally omitted here to keep
+  # the demo instance small. The Kafka ingestion path is exercised in dev/tests
+  # via docker-compose.yml.
   api:
     build:
       context: .
