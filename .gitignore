@@ -6,3 +6,4 @@ dist/
 .env
 fixtures/*.tmp
 .superpowers/
+.DS_Store

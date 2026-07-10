@@ -1,0 +1,80 @@
+.decision-stamp {
+  --stamp-color: var(--cyan);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 20px;
+}
+
+.decision-stamp-plate {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 30px;
+  border: 3px solid var(--stamp-color);
+  border-radius: 10px;
+  outline: 1px solid var(--stamp-color);
+  outline-offset: 5px;
+  background: color-mix(in srgb, var(--stamp-color) 8%, transparent);
+  transform: rotate(-3deg);
+  animation: stamp-impact 420ms var(--ease) both;
+}
+
+.decision-stamp-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  letter-spacing: 0.14em;
+  color: var(--stamp-color);
+  text-shadow: 0 0 1px currentColor;
+  white-space: nowrap;
+}
+
+.decision-stamp-confidence {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--stamp-color);
+  opacity: 0.85;
+}
+
+.decision-stamp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 320px;
+}
+
+.decision-stamp-chip {
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  white-space: nowrap;
+}
+
+@keyframes stamp-impact {
+  0% {
+    opacity: 0;
+    transform: rotate(-3deg) scale(1.5);
+  }
+  60% {
+    opacity: 1;
+    transform: rotate(-3deg) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-3deg) scale(1);
+  }
+}
