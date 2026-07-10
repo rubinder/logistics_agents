@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: logistics
+      POSTGRES_PASSWORD: logistics
+      POSTGRES_DB: logistics
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logistics"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redpanda:
+    image: redpandadata/redpanda:v24.1.1
+    command:
+      - redpanda
+      - start
+      - --smp=1
+      - --overprovisioned
+      - --node-id=0
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      LOGISTICS_DATABASE_URL: postgresql://logistics:logistics@postgres:5432/logistics
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LOGISTICS_BUDGET_CAP_USD: ${LOGISTICS_BUDGET_CAP_USD:-5}
+      LOGISTICS_PER_IP_DAILY: ${LOGISTICS_PER_IP_DAILY:-5}
+      LOGISTICS_GLOBAL_DAILY: ${LOGISTICS_GLOBAL_DAILY:-30}
+      LOGISTICS_TRIGGER_MODEL: ${LOGISTICS_TRIGGER_MODEL:-claude-haiku-4-5}
+    ports:
+      - "80:80"
+
+volumes:
+  pgdata:
