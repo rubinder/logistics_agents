@@ -4,10 +4,22 @@ locals {
   # API paths proxied to the EC2 origin (everything else is served from S3).
   api_path_patterns = ["/health", "/runs", "/runs/*", "/budget", "/scenarios"]
 
-  # AWS-managed policy IDs.
-  caching_optimized_id = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized
-  caching_disabled_id  = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # CachingDisabled
-  all_viewer_orp_id    = "216adef6-5c7f-47e4-b989-5492eb8f4c0f" # AllViewer origin-request policy
+  caching_optimized_id = data.aws_cloudfront_cache_policy.optimized.id
+  caching_disabled_id  = data.aws_cloudfront_cache_policy.disabled.id
+  all_viewer_orp_id    = data.aws_cloudfront_origin_request_policy.all_viewer.id
+}
+
+# AWS-managed policies looked up by name (avoids hardcoded-ID drift).
+data "aws_cloudfront_cache_policy" "optimized" {
+  name = "Managed-CachingOptimized"
+}
+
+data "aws_cloudfront_cache_policy" "disabled" {
+  name = "Managed-CachingDisabled"
+}
+
+data "aws_cloudfront_origin_request_policy" "all_viewer" {
+  name = "Managed-AllViewer"
 }
 
 resource "aws_cloudfront_origin_access_control" "s3" {
