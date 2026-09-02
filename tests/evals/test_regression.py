@@ -4,7 +4,7 @@ import pytest
 
 from evals.dataset import CASES
 from evals.results import check_regression, load_report
-from evals.run import run_comparison
+from evals.run import DEFAULT_JUDGE_MODEL, build_client, run_comparison
 from logistics_agents.data import seed
 
 BASELINE_DIR = Path(__file__).resolve().parents[2] / "evals" / "baseline"
@@ -29,9 +29,14 @@ def test_replay_matches_baseline_no_regression(postgres_conn, tmp_path):
     seed.load_seed(postgres_conn)
     for model in _baseline_models():
         baseline = load_report(BASELINE_DIR / f"{model}.json")
+        # Score on the same basis the baseline was recorded with. The judge runs
+        # from the fixture cache, so it stays free and deterministic in CI; grading
+        # without it would renormalize the composite and flag a phantom regression.
         reports = run_comparison(
             models=[model], cases=CASES, conn=postgres_conn, out_dir=tmp_path,
-            mode="replay", fixtures_dir=FIXTURES_DIR, judge_llm=None,
+            mode="replay", fixtures_dir=FIXTURES_DIR,
+            judge_llm=build_client("replay", FIXTURES_DIR),
+            judge_model=DEFAULT_JUDGE_MODEL,
         )
         regressions = check_regression(reports[0], baseline)
         assert regressions == [], f"{model}: {regressions}"

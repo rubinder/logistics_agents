@@ -16,6 +16,9 @@ from logistics_agents.llm.cache import RecordReplayCache
 from logistics_agents.llm.client import LLMClient
 
 DEFAULT_DSN = "postgresql://logistics:logistics@localhost:5432/logistics"
+# Record and replay must agree on the judge model: the fixture cache key includes it,
+# so a drift here turns every regression run into a cache miss.
+DEFAULT_JUDGE_MODEL = "claude-opus-4-8"
 
 
 def _now_iso() -> str:
@@ -78,7 +81,7 @@ def main(argv=None) -> int:
     parser.add_argument("--mode", default="live", choices=["live", "replay"])
     parser.add_argument("--out", default="evals/results")
     parser.add_argument("--fixtures", default="fixtures/llm")
-    parser.add_argument("--judge-model", default="claude-opus-4-8")
+    parser.add_argument("--judge-model", default=DEFAULT_JUDGE_MODEL)
     args = parser.parse_args(argv)
 
     dsn = os.environ.get("LOGISTICS_DATABASE_URL", DEFAULT_DSN)
