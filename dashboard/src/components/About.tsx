@@ -33,7 +33,7 @@ export function AboutExtended() {
         <p>
           Most agent demos wire up a model and hope. This one treats agent output the way you would
           treat any other critical code path: measured, tested, and defended on every change. The
-          logistics domain is a concrete, believable place to show that discipline — decisions have
+          logistics domain is a concrete, believable place to show that discipline: decisions have
           obvious right and wrong answers, and the failure modes are easy to describe.
         </p>
         <p>
@@ -47,7 +47,7 @@ export function AboutExtended() {
         <ol className="about-flow">
           <li>
             <span className="about-step">Notification</span> A shipment notification arrives on a
-            Kafka topic — what a supplier claims they sent, against which purchase order.
+            Kafka topic: what a supplier claims they sent, against which purchase order.
           </li>
           <li>
             <span className="about-step">Orchestrator</span> An agent decomposes it into subtasks
@@ -56,8 +56,8 @@ export function AboutExtended() {
           </li>
           <li>
             <span className="about-step">Specialists</span> Inventory reconciliation, carrier
-            tracking and exception detection each read the facts they need from Postgres — purchase
-            orders, stock levels and warehouse capacity, carrier events — and return a structured
+            tracking and exception detection each read the facts they need from Postgres (purchase
+            orders, stock levels and warehouse capacity, carrier events) and return a structured
             finding rather than prose.
           </li>
           <li>
@@ -66,8 +66,8 @@ export function AboutExtended() {
             exceptions, recommended actions, a confidence and its reasoning.
           </li>
           <li>
-            <span className="about-step">Trace</span> Every model call is captured as it happens —
-            inputs, outputs, tokens, cost, latency — and persisted alongside the decision.
+            <span className="about-step">Trace</span> Every model call is captured as it happens
+            (inputs, outputs, tokens, cost, latency) and persisted alongside the decision.
           </li>
           <li>
             <span className="about-step">This dashboard</span> A FastAPI service reads that back and
@@ -81,10 +81,10 @@ export function AboutExtended() {
         <h2>How it is evaluated</h2>
         <p>
           A labelled dataset of shipment scenarios pairs each notification with its expected
-          outcome, one perturbation at a time — a short shipment, a late delivery, missing paperwork,
+          outcome, one perturbation at a time: a short shipment, a late delivery, missing paperwork,
           damage, an unknown purchase order, a destination without the capacity to receive the
-          goods — so a drop in score points at a specific behaviour rather than a vague sense that
-          quality moved.
+          goods. A drop in score therefore points at a specific behaviour rather than a vague sense
+          that quality moved.
         </p>
         <p>
           Grading is hybrid. Deterministic graders check the decision label, the precision and
@@ -97,7 +97,7 @@ export function AboutExtended() {
         <p>
           Those scores are only worth anything if they are defended. Every model response is
           recorded once and replayed from a fixture cache afterwards, so the whole evaluation re-runs
-          on every pull request — deterministically, with no API key and at no cost — and fails the
+          on every pull request (deterministically, with no API key and at no cost) and fails the
           build if any case scores below its committed baseline. Each recorded baseline is stamped
           with the dataset and rubric version that produced it, so a changed dataset cannot be
           quietly compared against stale expectations.
@@ -125,7 +125,7 @@ export function AboutExtended() {
           Live runs are guarded rather than trusted. A ledger enforces a hard monthly spend cap and
           accounts for spend before the call rather than after, so a failure cannot leak budget.
           Per-visitor and global rate limits sit in front of that, the default model is the cheap
-          one, and the API key stays server-side in the parameter store — never in this page, never
+          one, and the API key stays server-side in the parameter store: never in this page, never
           in the bundle.
         </p>
       </section>
