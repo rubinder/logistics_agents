@@ -142,7 +142,7 @@ export default function App() {
           )}
           {tab === "log" && (
             <div role="tabpanel" id="panel-log" aria-labelledby="tab-log">
-              <RunLog entries={logEntries} />
+              <RunLog entries={logEntries} selectedRunId={selectedRunId} />
             </div>
           )}
           {tab === "about" && (

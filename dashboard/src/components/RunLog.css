@@ -35,6 +35,18 @@
   letter-spacing: 0.04em;
 }
 
+.run-log-entry--current .run-log-run-head {
+  color: var(--ink);
+}
+
+/* A quiet spine down the selected run, so the block the feed jumped to is
+   identifiable without shouting over the reasoning itself. */
+.run-log-entry--current {
+  border-left: 2px solid var(--cyan);
+  margin-left: -10px;
+  padding-left: 8px;
+}
+
 .run-log-node {
   display: flex;
   align-items: baseline;
