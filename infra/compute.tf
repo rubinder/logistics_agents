@@ -101,6 +101,17 @@ resource "aws_instance" "api" {
   }
 
   tags = { Name = "${var.project}-api" }
+
+  lifecycle {
+    # The AMI comes from the "latest AL2023" SSM parameter, which moves every
+    # time Amazon publishes an image. Without this, a routine `terraform apply`
+    # -- including the one the README runbook tells you to run -- destroys and
+    # recreates the running API purely because the AMI id drifted. Picking up a
+    # newer AMI is a deliberate act: `terraform apply -replace=aws_instance.api`.
+    # user_data changes still recreate the instance, via
+    # user_data_replace_on_change above.
+    ignore_changes = [ami]
+  }
 }
 
 resource "aws_eip" "api" {

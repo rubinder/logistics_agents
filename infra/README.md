@@ -49,13 +49,52 @@ cd ../infra && terraform output -raw dashboard_url
 ```
 The EC2 finishes its `docker compose up --build` a few minutes after `apply`; `curl "$(terraform output -raw dashboard_url)/health"` returns `{"status":"ok"}` once it's serving.
 
-## Redeploy the dashboard only
+## Automatic dashboard deploys
+
+`.github/workflows/deploy-dashboard.yml` publishes the dashboard on every push
+to `main` that touches `dashboard/**`: it runs the tests, builds, syncs to S3,
+invalidates CloudFront, **waits for the invalidation to complete**, then asserts
+the live page references the asset hash just built. Without that wait a job goes
+green while the edge is still serving the previous bundle, which looks exactly
+like a deploy that did nothing.
+
+Credentials are federated with OIDC, so no AWS key is stored in GitHub. The role
+(`infra/github_oidc.tf`) trusts only `repo:<owner>/<name>:ref:refs/heads/main`
+and may do nothing beyond writing the dashboard bucket and invalidating the one
+distribution.
+
+One-time setup, after `terraform apply` has created the role:
+```bash
+cd infra
+gh variable set AWS_DEPLOY_ROLE_ARN --body "$(terraform output -raw github_deploy_role_arn)"
+gh variable set S3_BUCKET --body "$(terraform output -raw s3_bucket)"
+gh variable set CLOUDFRONT_DISTRIBUTION_ID --body "$(terraform output -raw cloudfront_distribution_id)"
+gh variable set SITE_URL --body "$(terraform output -raw dashboard_url)"
+```
+These are repository *variables*, not secrets: none is sensitive on its own, but
+the bucket name embeds the AWS account id, which is why it is not committed.
+
+## Redeploy the dashboard by hand
 ```bash
 cd dashboard && npm run build
 aws s3 sync dist "s3://$(cd ../infra && terraform output -raw s3_bucket)" --delete
 aws cloudfront create-invalidation \
   --distribution-id "$(cd ../infra && terraform output -raw cloudfront_distribution_id)" --paths "/*"
 ```
+
+## A note on the AMI
+
+`aws_instance.api` takes its AMI from the "latest AL2023" SSM parameter, which
+moves whenever Amazon publishes an image. The instance therefore carries
+`lifecycle { ignore_changes = [ami] }`: without it, a routine `terraform apply`
+destroys and recreates the running API purely because the AMI id drifted
+underneath it, with no change on your side. Adopting a newer AMI is deliberate:
+
+```bash
+terraform apply -replace=aws_instance.api
+```
+
+`user_data` changes still recreate the instance, via `user_data_replace_on_change`.
 
 ## Redeploy the API (after code changes)
 Push the branch, then re-run the instance's user-data by tainting it (recreates the box) or SSM into it and `git pull && docker compose --env-file .env -f docker-compose.deploy.yml up -d --build`:

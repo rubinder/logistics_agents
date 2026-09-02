@@ -1,0 +1,90 @@
+name: Deploy Dashboard
+
+# Publishes the built dashboard to S3 + CloudFront on every push to main that
+# touches it. Credentials are federated via OIDC (infra/github_oidc.tf) into a
+# role scoped to this repo on this branch — nothing long-lived is stored here.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dashboard/**"
+      - ".github/workflows/deploy-dashboard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # required to mint the OIDC token
+
+# Never let two deploys race the same bucket; let a newer commit supersede an
+# older one still waiting on an invalidation.
+concurrency:
+  group: deploy-dashboard
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.SITE_URL }}
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+
+      - run: npm ci
+
+      # Publish nothing that does not pass its own tests.
+      - name: Test
+        run: npm run test -- --run
+
+      - name: Build
+        run: npm run build
+
+      - name: Assume the deploy role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      # Repo variables are passed through env rather than interpolated into the
+      # shell, so the script never depends on what a value expands to.
+      - name: Sync to S3
+        env:
+          BUCKET: ${{ vars.S3_BUCKET }}
+        run: aws s3 sync dist "s3://$BUCKET" --delete
+
+      # The hashed assets are new files every build, but index.html and the
+      # favicons keep their paths, so the edge has to be told to drop them.
+      - name: Invalidate CloudFront and wait for the edge to catch up
+        env:
+          DIST: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          set -euo pipefail
+          ID=$(aws cloudfront create-invalidation \
+                 --distribution-id "$DIST" --paths "/*" \
+                 --query Invalidation.Id --output text)
+          echo "invalidation $ID"
+          # Without this the job goes green while the CDN still serves the old
+          # bundle, which reads as "the deploy did nothing".
+          aws cloudfront wait invalidation-completed \
+            --distribution-id "$DIST" --id "$ID"
+
+      - name: Verify the live page serves this build
+        env:
+          URL: ${{ vars.SITE_URL }}
+        run: |
+          set -euo pipefail
+          ASSET=$(grep -o '/assets/index-[^"]*\.js' dist/index.html | head -1)
+          echo "expecting $ASSET"
+          # Cache-bust the HTML so we read the edge's post-invalidation copy.
+          curl -fsS "$URL/?ci=$GITHUB_SHA" | grep -q "$ASSET"
+          echo "live page references the build just published"
