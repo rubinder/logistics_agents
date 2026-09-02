@@ -1,0 +1,101 @@
+/* Short orientation note pinned above the run replay. */
+.about-blurb {
+  display: block;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-left: 2px solid var(--cyan);
+  background: var(--panel);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  max-width: 86ch;
+}
+
+.about-blurb strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* Long-form About Extended tab. */
+.about {
+  padding: 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.about-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.about-section h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.about-section p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.65;
+  max-width: 78ch;
+}
+
+.about-section strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.about-flow {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: about-step;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.about-flow li {
+  counter-increment: about-step;
+  position: relative;
+  padding-left: 30px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  max-width: 78ch;
+}
+
+.about-flow li::before {
+  content: counter(about-step);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The stage name reads as the line's subject, then the explanation follows. */
+.about-step {
+  display: block;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  margin-bottom: 2px;
+}

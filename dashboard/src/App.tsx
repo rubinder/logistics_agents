@@ -5,6 +5,7 @@ import "./App.css";
 import { Api } from "./api/client";
 import { FIXTURE_BUDGET, FIXTURE_EVAL_REPORTS } from "./api/fixtures";
 import type { BudgetStatus, EvalReport } from "./api/types";
+import { AboutBlurb, AboutExtended } from "./components/About";
 import { EvalBoard } from "./components/EvalBoard";
 import { RunLog } from "./components/RunLog";
 import { RunsBoard } from "./components/RunsBoard";
@@ -14,7 +15,7 @@ import { TriggerPanel } from "./components/TriggerPanel";
 import { useRunLog } from "./hooks/useRunLog";
 import { useRunStream } from "./hooks/useRunStream";
 
-type MainTab = "trace" | "log";
+type MainTab = "trace" | "log" | "about";
 
 export default function App() {
   // A single Api instance for the app's lifetime, so its `usingFixtures`
@@ -116,9 +117,21 @@ export default function App() {
               Log
               {logEntries.length > 0 && <span className="app-tab-count">{logEntries.length}</span>}
             </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-about"
+              aria-selected={tab === "about"}
+              aria-controls="panel-about"
+              className={`app-tab ${tab === "about" ? "app-tab--active" : ""}`}
+              onClick={() => setTab("about")}
+            >
+              About Extended
+            </button>
           </div>
-          {tab === "trace" ? (
+          {tab === "trace" && (
             <div role="tabpanel" id="panel-trace" aria-labelledby="tab-trace">
+              <AboutBlurb />
               <RunView
                 runId={selectedRunId}
                 traces={traces}
@@ -126,9 +139,15 @@ export default function App() {
                 error={error}
               />
             </div>
-          ) : (
+          )}
+          {tab === "log" && (
             <div role="tabpanel" id="panel-log" aria-labelledby="tab-log">
               <RunLog entries={logEntries} />
+            </div>
+          )}
+          {tab === "about" && (
+            <div role="tabpanel" id="panel-about" aria-labelledby="tab-about">
+              <AboutExtended />
             </div>
           )}
         </section>

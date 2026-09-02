@@ -71,4 +71,31 @@ describe("App", () => {
     expect(screen.getByRole("tab", { name: /log/i }).textContent).toBe(filledCount);
     expect(screen.getByRole("tabpanel")).toHaveTextContent(/orchestrator/i);
   });
+
+  it("shows three tabs, with About Extended last", async () => {
+    render(<App />);
+    await act(async () => {});
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual([
+      "Trace",
+      "Log",
+      "About Extended",
+    ]);
+  });
+
+  it("orients the reader with the blurb on the Trace tab", async () => {
+    render(<App />);
+    await act(async () => {});
+    expect(screen.getByRole("note")).toHaveTextContent(/orchestrator/i);
+  });
+
+  it("opens About Extended and drops the run replay", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await act(async () => {});
+
+    await user.click(screen.getByRole("tab", { name: /about extended/i }));
+
+    expect(screen.getByRole("tabpanel")).toHaveTextContent(/why this exists/i);
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
+  });
 });
