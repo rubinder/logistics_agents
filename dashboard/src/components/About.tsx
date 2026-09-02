@@ -8,8 +8,8 @@ export function AboutBlurb() {
   return (
     <aside className="about-blurb" role="note">
       <strong>What you&apos;re watching.</strong> An inbound shipment notification enters as a
-      message. An orchestrator agent decomposes it, three specialists work the parts — inventory
-      reconciliation against the purchase order, carrier tracking, exception detection — and a
+      message. An orchestrator agent decomposes it, three specialists work the parts (inventory
+      reconciliation against the purchase order, carrier tracking, exception detection), and a
       synthesis agent turns their findings into one structured decision: accept, hold, reroute, or
       escalate. Each station below is a real model call, traced for cost, latency and tokens. Switch
       to <strong>Log</strong> to read the agents&apos; own reasoning.
