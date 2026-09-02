@@ -41,7 +41,7 @@ export function EvalBoard({ reports }: EvalBoardProps) {
                   {formatComposite(report.mean_composite)}
                 </span>
                 <span className="eval-board-provenance mono">
-                  rubric {report.rubric_version} &middot; dataset {report.dataset_version}
+                  {report.rubric_version} &middot; {report.dataset_version}
                 </span>
               </div>
               <div className="eval-board-bars">

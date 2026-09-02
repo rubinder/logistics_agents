@@ -124,7 +124,9 @@ export function RunLog({ entries }: RunLogProps) {
             {entry.kind === "decision" && entry.decision ? (
               <DecisionBlock decision={entry.decision} />
             ) : (
-              entry.trace && <TraceBlock entry={entry} />
+              entry.trace && (
+                <TraceBlock entry={entry} restatedBy={entries[index + 1]} />
+              )
             )}
           </div>
         );
@@ -133,9 +135,25 @@ export function RunLog({ entries }: RunLogProps) {
   );
 }
 
-function TraceBlock({ entry }: { entry: LogEntry }) {
+/**
+ * True when the next entry is this run's decision carrying the same reasoning.
+ * The final node's output *is* the decision, so without this the same
+ * paragraph prints twice: once raw, then again in the formatted block.
+ */
+function isRestatedBy(reasoning: string | null, next: LogEntry | undefined): boolean {
+  if (reasoning === null || next === undefined) return false;
+  return next.kind === "decision" && next.decision?.reasoning === reasoning;
+}
+
+function TraceBlock({ entry, restatedBy }: { entry: LogEntry; restatedBy?: LogEntry }) {
   const trace = entry.trace!;
-  const { reasoning, fields, raw } = parseOutput(trace.output_json);
+  const parsed = parseOutput(trace.output_json);
+  const restated = isRestatedBy(parsed.reasoning, restatedBy);
+  // Collapse to the header: the decision block below carries the content, and
+  // the header still records that the call happened, and what it cost.
+  const { reasoning, fields, raw } = restated
+    ? { reasoning: null, fields: [] as [string, string][], raw: null }
+    : parsed;
   return (
     <div className="run-log-trace">
       <div className="run-log-node mono">

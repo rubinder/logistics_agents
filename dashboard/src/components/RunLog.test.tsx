@@ -99,6 +99,58 @@ describe("RunLog", () => {
     expect(screen.getByText(/Redirect to an alternate DC/)).toBeInTheDocument();
   });
 
+  it("does not print the final node's reasoning twice when the decision restates it", () => {
+    // The synthesis node's output IS the decision, so the formatted decision
+    // block that follows would otherwise repeat the same paragraph verbatim.
+    const reasoning = "Quantity is short by twenty units, so hold.";
+    render(
+      <RunLog
+        entries={[
+          traceEntry("run-1", "synthesis", { reasoning, label: "HOLD" }),
+          {
+            key: "run-1:__decision__",
+            runId: "run-1",
+            kind: "decision",
+            decision: {
+              label: "HOLD",
+              exceptions: [],
+              recommended_actions: [],
+              confidence: 0.9,
+              reasoning,
+            },
+          },
+        ]}
+      />,
+    );
+    expect(screen.getAllByText(reasoning)).toHaveLength(1);
+    // The node header still marks that the call happened.
+    expect(screen.getByText("[synthesis]")).toBeInTheDocument();
+  });
+
+  it("keeps a node's reasoning when the decision says something different", () => {
+    render(
+      <RunLog
+        entries={[
+          traceEntry("run-1", "synthesis", { reasoning: "Node said this." }),
+          {
+            key: "run-1:__decision__",
+            runId: "run-1",
+            kind: "decision",
+            decision: {
+              label: "HOLD",
+              exceptions: [],
+              recommended_actions: [],
+              confidence: 0.9,
+              reasoning: "Decision said something else.",
+            },
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText("Node said this.")).toBeInTheDocument();
+    expect(screen.getByText("Decision said something else.")).toBeInTheDocument();
+  });
+
   it("renders an empty state when nothing has streamed yet", () => {
     render(<RunLog entries={[]} />);
     expect(screen.getByText(/nothing has streamed yet/i)).toBeInTheDocument();

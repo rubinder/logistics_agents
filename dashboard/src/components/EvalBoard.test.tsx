@@ -27,4 +27,13 @@ describe("EvalBoard", () => {
     const renderedOrder = screen.getAllByTestId("eval-model").map((el) => el.textContent);
     expect(renderedOrder).toEqual(expectedOrder);
   });
+
+  it("shows the rubric and dataset versions that produced the numbers", () => {
+    render(<EvalBoard reports={FIXTURE_EVAL_REPORTS} />);
+    // The version strings name themselves ("judge-v1", "dataset-v2"), so the
+    // board prints them verbatim rather than prefixing them into a stutter.
+    expect(screen.getAllByText(/judge-v1/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/dataset-v2/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/dataset dataset-/)).not.toBeInTheDocument();
+  });
 });
