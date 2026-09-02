@@ -17,6 +17,16 @@ def load_report(path: Path) -> EvalReport:
 
 def check_regression(report: EvalReport, baseline: EvalReport, tolerance: float = 0.0) -> list[str]:
     messages: list[str] = []
+    # A score is only comparable to a baseline recorded from the same dataset and
+    # rubric. Without this, editing the dataset and forgetting to re-record leaves
+    # the gate silently grading new cases against stale expectations.
+    for field in ("dataset_version", "rubric_version"):
+        current, prior = getattr(report, field), getattr(baseline, field)
+        if current != prior:
+            messages.append(
+                f"{field} mismatch: report is {current!r} but baseline is {prior!r} "
+                f"— re-record the baseline"
+            )
     if report.mean_composite < baseline.mean_composite - tolerance:
         messages.append(
             f"mean_composite regressed: {report.mean_composite:.3f} < "

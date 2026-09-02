@@ -1,1 +1,0 @@
-{"output_json":"{\"status\":\"in_transit\",\"eta\":\"2026-07-05T00:00:00Z\",\"delayed\":false,\"reasoning\":\"Shipment is currently in transit with UPS tracking number 1Z-1001. ETA is 2026-07-05. No delays have been reported by the carrier.\"}","input_tokens":608,"output_tokens":72,"model":"claude-haiku-4-5","cache_read_input_tokens":0,"cache_creation_input_tokens":0}

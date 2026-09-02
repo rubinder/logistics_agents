@@ -41,3 +41,10 @@ def test_per_case_regression_flagged():
     current = _report(0.9, 0.5)  # aggregate same, one case dropped
     msgs = check_regression(current, baseline)
     assert any("c1" in m for m in msgs)
+
+
+def test_stale_baseline_version_is_reported():
+    baseline = _report(0.9, 0.9)
+    current = _report(0.92, 0.92).model_copy(update={"dataset_version": "dataset-v9"})
+    messages = check_regression(current, baseline)
+    assert any("dataset_version mismatch" in m for m in messages), messages

@@ -22,6 +22,7 @@ def test_dataset_covers_key_exception_types():
         ExceptionType.UNKNOWN_PO,
         ExceptionType.MISSING_DOCS,
         ExceptionType.DAMAGED,
+        ExceptionType.OVERCAPACITY,
     ):
         assert required in covered, f"dataset missing a case for {required}"
 
@@ -41,4 +42,34 @@ def test_non_late_cases_avoid_the_delayed_tracking_number():
             assert c.asn.tracking_number not in delayed_tns, (
                 f"case {c.case_id} expects no LATE_DELIVERY but uses a seeded-delayed "
                 f"tracking number {c.asn.tracking_number}"
+            )
+
+
+def test_non_overcapacity_cases_fit_destination_headroom():
+    """A case must not smuggle in a second exception via the seed's capacity limits.
+
+    The sibling guard above does this for delayed tracking numbers. This one covers
+    capacity: a case whose line items overflow the destination DC carries an implicit
+    OVERCAPACITY exception, which breaks the one-perturbation-per-case design and
+    makes the case grade against an incomplete expected set.
+    """
+    from logistics_agents.data.seed_data import SEED_INVENTORY, SEED_PURCHASE_ORDERS
+
+    pos = {p.po_id: p for p in SEED_PURCHASE_ORDERS}
+    headroom = {(i.sku, i.dc_id): i.capacity - i.on_hand for i in SEED_INVENTORY}
+
+    for c in CASES:
+        if ExceptionType.OVERCAPACITY in c.expected.exception_types:
+            continue
+        po = pos.get(c.asn.po_id)
+        if po is None:
+            continue
+        for item in c.asn.reported_items:
+            room = headroom.get((item.sku, po.destination_dc))
+            if room is None:
+                continue
+            assert item.quantity <= room, (
+                f"case {c.case_id} expects no OVERCAPACITY but ships {item.quantity} "
+                f"of {item.sku} into {po.destination_dc}, which has only {room} of "
+                f"headroom"
             )

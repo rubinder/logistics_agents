@@ -11,8 +11,8 @@
         "exception_recall": 1.0,
         "exception_f1": 1.0,
         "action_coverage": 1.0,
-        "judge_score": 4,
-        "composite": 0.96
+        "judge_score": 5,
+        "composite": 1.0
       }
     },
     {
@@ -49,6 +49,20 @@
       "label": "ESCALATE",
       "score": {
         "label_correct": true,
+        "exception_precision": 0.5,
+        "exception_recall": 1.0,
+        "exception_f1": 0.6666666666666666,
+        "action_coverage": 1.0,
+        "judge_score": 3,
+        "composite": 0.82
+      }
+    },
+    {
+      "case_id": "missing-docs",
+      "model": "claude-opus-4-8",
+      "label": "HOLD",
+      "score": {
+        "label_correct": true,
         "exception_precision": 1.0,
         "exception_recall": 1.0,
         "exception_f1": 1.0,
@@ -58,41 +72,41 @@
       }
     },
     {
-      "case_id": "missing-docs",
+      "case_id": "damaged",
       "model": "claude-opus-4-8",
-      "label": "ESCALATE",
+      "label": "REROUTE",
       "score": {
-        "label_correct": false,
-        "exception_precision": 0.5,
+        "label_correct": true,
+        "exception_precision": 1.0,
         "exception_recall": 1.0,
-        "exception_f1": 0.6666666666666666,
+        "exception_f1": 1.0,
         "action_coverage": 1.0,
-        "judge_score": 3,
-        "composite": 0.42
+        "judge_score": 4,
+        "composite": 0.96
       }
     },
     {
-      "case_id": "damaged",
+      "case_id": "overcapacity",
       "model": "claude-opus-4-8",
-      "label": "ESCALATE",
+      "label": "REROUTE",
       "score": {
-        "label_correct": false,
-        "exception_precision": 0.5,
+        "label_correct": true,
+        "exception_precision": 1.0,
         "exception_recall": 1.0,
-        "exception_f1": 0.6666666666666666,
+        "exception_f1": 1.0,
         "action_coverage": 1.0,
         "judge_score": 4,
-        "composite": 0.46
+        "composite": 0.96
       }
     }
   ],
-  "label_accuracy": 0.6666666666666666,
-  "mean_f1": 0.8888888888888888,
+  "label_accuracy": 1.0,
+  "mean_f1": 0.9523809523809524,
   "mean_action_coverage": 1.0,
-  "mean_judge": 4.166666666666667,
-  "mean_composite": 0.7999999999999999,
+  "mean_judge": 4.285714285714286,
+  "mean_composite": 0.9571428571428572,
   "rubric_version": "judge-v1",
-  "dataset_version": "dataset-v1",
-  "timestamp": "2026-09-02T13:29:43.739920+00:00",
-  "git_sha": "1fc50301417a94a2395969bb15857a81d36730b5"
+  "dataset_version": "dataset-v2",
+  "timestamp": "2026-09-02T18:06:24.311928+00:00",
+  "git_sha": "2b1a0859bb25da5bc4d7013b6801cb2ed451bd38"
 }

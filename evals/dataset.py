@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from logistics_agents.domain.enums import DecisionLabel, ExceptionType
 from logistics_agents.domain.models import LineItem, ShipmentNotification
 
-DATASET_VERSION = "dataset-v1"
+DATASET_VERSION = "dataset-v2"
 
 
 class ExpectedOutcome(BaseModel):
@@ -71,7 +71,7 @@ CASES: list[EvalCase] = [
     ),
     EvalCase(
         case_id="missing-docs",
-        asn=_asn("SH-DOCS", "PO-1002", "1Z-1001", [("SKU-B", 50), ("SKU-C", 25)], _ON_TIME, docs_present=False),
+        asn=_asn("SH-DOCS", "PO-1001", "1Z-1001", [("SKU-A", 100)], _ON_TIME, docs_present=False),
         expected=ExpectedOutcome(
             label=DecisionLabel.HOLD,
             exception_types=[ExceptionType.MISSING_DOCS],
@@ -80,10 +80,22 @@ CASES: list[EvalCase] = [
     ),
     EvalCase(
         case_id="damaged",
-        asn=_asn("SH-DMG", "PO-1002", "1Z-1001", [("SKU-B", 50), ("SKU-C", 25)], _ON_TIME, damaged=True),
+        asn=_asn("SH-DMG", "PO-1001", "1Z-1001", [("SKU-A", 100)], _ON_TIME, damaged=True),
         expected=ExpectedOutcome(
             label=DecisionLabel.REROUTE,
             exception_types=[ExceptionType.DAMAGED],
+            required_actions=[],
+        ),
+    ),
+    EvalCase(
+        # PO-1002 orders SKU-B x50 into DC-WEST, which has only 20 units of headroom
+        # (capacity 200 - on_hand 180). Shipping exactly what the PO asks for is
+        # therefore a clean single-perturbation OVERCAPACITY scenario.
+        case_id="overcapacity",
+        asn=_asn("SH-CAP", "PO-1002", "1Z-1001", [("SKU-B", 50), ("SKU-C", 25)], _ON_TIME),
+        expected=ExpectedOutcome(
+            label=DecisionLabel.REROUTE,
+            exception_types=[ExceptionType.OVERCAPACITY],
             required_actions=[],
         ),
     ),
