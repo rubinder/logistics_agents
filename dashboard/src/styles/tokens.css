@@ -1,0 +1,42 @@
+/*
+ * Design tokens for the logistics-agents dashboard.
+ *
+ * Aesthetic: a logistics operations control room — a cool slate/graphite
+ * base, not the cream/serif "AI assistant" default and not a near-black
+ * hacker-terminal green-on-black. The five decision states (ACCEPT / HOLD /
+ * REROUTE / ESCALATE) are the signal color system layered on top of that
+ * neutral base, so they read as alarms/status lights rather than as brand
+ * decoration.
+ */
+
+:root {
+  /* Surfaces */
+  --void: #0e1420;
+  --panel: #161e2e;
+  --panel-2: #1d2739;
+  --line: #26324a;
+
+  /* Text */
+  --ink: #e6ecf5;
+  --muted: #8a98b3;
+
+  /* Accent / focus */
+  --cyan: #4cc9f0;
+
+  /* Decision-state signal colors */
+  --accept: #3dd68c;
+  --hold: #f5b14c;
+  --reroute: #6ea8fe;
+  --escalate: #ff6b6b;
+
+  /* Type */
+  --font-display: "Space Grotesk", -apple-system, "Segoe UI", sans-serif;
+  --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Geometry */
+  --radius: 6px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.6, 0.2, 1);
+}

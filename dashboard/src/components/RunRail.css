@@ -1,0 +1,89 @@
+.run-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  padding: 24px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.run-rail-track {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.run-rail-item {
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.run-rail-item:last-child {
+  flex: 0 0 auto;
+}
+
+.run-rail-connector {
+  flex: 1 1 auto;
+  height: 2px;
+  min-width: 16px;
+  margin: 0 6px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--line) 0,
+    var(--line) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  transition: background 240ms var(--ease);
+  align-self: center;
+}
+
+.run-rail-connector--done {
+  background: var(--connector-signal, var(--cyan));
+}
+
+.run-rail-terminus {
+  display: flex;
+  justify-content: center;
+}
+
+/* Narrow screens: the rail stacks vertically, shipment moving top to bottom. */
+@media (max-width: 720px) {
+  .run-rail-track {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .run-rail-item {
+    flex-direction: column;
+    width: 100%;
+    max-width: 260px;
+  }
+
+  .run-rail-connector {
+    width: 2px;
+    height: 24px;
+    min-width: 0;
+    margin: 0;
+    background: repeating-linear-gradient(
+      180deg,
+      var(--line) 0,
+      var(--line) 6px,
+      transparent 6px,
+      transparent 12px
+    );
+  }
+
+  .run-rail-connector--done {
+    background: var(--connector-signal, var(--cyan));
+  }
+}

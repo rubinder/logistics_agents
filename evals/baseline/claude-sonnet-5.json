@@ -1,0 +1,112 @@
+{
+  "model": "claude-sonnet-5",
+  "results": [
+    {
+      "case_id": "clean-accept",
+      "model": "claude-sonnet-5",
+      "label": "ACCEPT",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 4,
+        "composite": 0.96
+      }
+    },
+    {
+      "case_id": "quantity-mismatch",
+      "model": "claude-sonnet-5",
+      "label": "HOLD",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 4,
+        "composite": 0.96
+      }
+    },
+    {
+      "case_id": "late-delivery",
+      "model": "claude-sonnet-5",
+      "label": "HOLD",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 4,
+        "composite": 0.96
+      }
+    },
+    {
+      "case_id": "unknown-po",
+      "model": "claude-sonnet-5",
+      "label": "ESCALATE",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 5,
+        "composite": 1.0
+      }
+    },
+    {
+      "case_id": "missing-docs",
+      "model": "claude-sonnet-5",
+      "label": "HOLD",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 3,
+        "composite": 0.9199999999999999
+      }
+    },
+    {
+      "case_id": "damaged",
+      "model": "claude-sonnet-5",
+      "label": "REROUTE",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 5,
+        "composite": 1.0
+      }
+    },
+    {
+      "case_id": "overcapacity",
+      "model": "claude-sonnet-5",
+      "label": "REROUTE",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 4,
+        "composite": 0.96
+      }
+    }
+  ],
+  "label_accuracy": 1.0,
+  "mean_f1": 1.0,
+  "mean_action_coverage": 1.0,
+  "mean_judge": 4.142857142857143,
+  "mean_composite": 0.9657142857142856,
+  "rubric_version": "judge-v1",
+  "dataset_version": "dataset-v2",
+  "timestamp": "2026-09-02T18:10:12.483458+00:00",
+  "git_sha": "2b1a0859bb25da5bc4d7013b6801cb2ed451bd38"
+}

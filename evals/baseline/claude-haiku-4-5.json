@@ -1,0 +1,112 @@
+{
+  "model": "claude-haiku-4-5",
+  "results": [
+    {
+      "case_id": "clean-accept",
+      "model": "claude-haiku-4-5",
+      "label": "ACCEPT",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 4,
+        "composite": 0.96
+      }
+    },
+    {
+      "case_id": "quantity-mismatch",
+      "model": "claude-haiku-4-5",
+      "label": "HOLD",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 4,
+        "composite": 0.96
+      }
+    },
+    {
+      "case_id": "late-delivery",
+      "model": "claude-haiku-4-5",
+      "label": "HOLD",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 2,
+        "composite": 0.8799999999999999
+      }
+    },
+    {
+      "case_id": "unknown-po",
+      "model": "claude-haiku-4-5",
+      "label": "ESCALATE",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 5,
+        "composite": 1.0
+      }
+    },
+    {
+      "case_id": "missing-docs",
+      "model": "claude-haiku-4-5",
+      "label": "HOLD",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 4,
+        "composite": 0.96
+      }
+    },
+    {
+      "case_id": "damaged",
+      "model": "claude-haiku-4-5",
+      "label": "REROUTE",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 4,
+        "composite": 0.96
+      }
+    },
+    {
+      "case_id": "overcapacity",
+      "model": "claude-haiku-4-5",
+      "label": "REROUTE",
+      "score": {
+        "label_correct": true,
+        "exception_precision": 1.0,
+        "exception_recall": 1.0,
+        "exception_f1": 1.0,
+        "action_coverage": 1.0,
+        "judge_score": 4,
+        "composite": 0.96
+      }
+    }
+  ],
+  "label_accuracy": 1.0,
+  "mean_f1": 1.0,
+  "mean_action_coverage": 1.0,
+  "mean_judge": 3.857142857142857,
+  "mean_composite": 0.9542857142857143,
+  "rubric_version": "judge-v1",
+  "dataset_version": "dataset-v2",
+  "timestamp": "2026-09-02T18:12:23.325202+00:00",
+  "git_sha": "2b1a0859bb25da5bc4d7013b6801cb2ed451bd38"
+}

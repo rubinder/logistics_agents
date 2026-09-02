@@ -24,3 +24,22 @@ SEED_INVENTORY: list[InventoryState] = [
     InventoryState(sku="SKU-B", dc_id="DC-WEST", on_hand=180, reserved=5, capacity=200),
     InventoryState(sku="SKU-C", dc_id="DC-WEST", on_hand=20, reserved=0, capacity=100),
 ]
+
+SEED_CARRIER_EVENTS: list[dict] = [
+    {
+        "tracking_number": "1Z-1001",
+        "event_type": "in_transit",
+        "status": "in_transit",
+        "eta": datetime(2026, 7, 5, tzinfo=timezone.utc),
+        "delayed": False,
+        "event_time": datetime(2026, 7, 4, tzinfo=timezone.utc),
+    },
+    {
+        "tracking_number": "1Z-1002",
+        "event_type": "delayed",
+        "status": "delayed",
+        "eta": datetime(2026, 7, 9, tzinfo=timezone.utc),
+        "delayed": True,
+        "event_time": datetime(2026, 7, 6, tzinfo=timezone.utc),
+    },
+]

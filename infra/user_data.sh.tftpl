@@ -1,0 +1,53 @@
+#!/bin/bash
+set -euxo pipefail
+
+# --- Docker + compose plugin ---
+dnf update -y
+dnf install -y docker git
+systemctl enable --now docker
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl -fSL "https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64" \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+# --- Fetch the Anthropic key from SSM (server-side only) ---
+ANTHROPIC_KEY="$(aws ssm get-parameter --name "${ssm_key_name}" --with-decryption \
+  --region "${region}" --query 'Parameter.Value' --output text)"
+
+# --- Clone the app and write the env file ---
+cd /opt
+rm -rf logistics_agents
+git clone --branch "${repo_branch}" --depth 1 "${repo_url}" logistics_agents
+cd logistics_agents
+
+cat > .env <<EOF
+ANTHROPIC_API_KEY=$${ANTHROPIC_KEY}
+LOGISTICS_BUDGET_CAP_USD=${budget_cap}
+LOGISTICS_PER_IP_DAILY=${per_ip_daily}
+LOGISTICS_GLOBAL_DAILY=${global_daily}
+LOGISTICS_TRIGGER_MODEL=${trigger_model}
+EOF
+chmod 600 .env
+
+# --- Build + run the API stack (postgres + api) ---
+docker compose --env-file .env -f docker-compose.deploy.yml up -d --build
+
+# --- Restart on reboot ---
+cat > /etc/systemd/system/logistics-agents.service <<'UNIT'
+[Unit]
+Description=logistics-agents API stack
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/logistics_agents
+ExecStart=/usr/bin/docker compose --env-file .env -f docker-compose.deploy.yml up -d
+ExecStop=/usr/bin/docker compose -f docker-compose.deploy.yml down
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+systemctl daemon-reload
+systemctl enable logistics-agents.service

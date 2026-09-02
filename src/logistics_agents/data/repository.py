@@ -1,13 +1,16 @@
 import json
+from datetime import datetime
 
 import psycopg
 
 from logistics_agents.domain.models import (
+    CarrierStatus,
     Decision,
     ExceptionRecord,
     InventoryState,
     LineItem,
     PurchaseOrder,
+    TraceRecord,
 )
 
 
@@ -90,6 +93,13 @@ def insert_decision(
             INSERT INTO decisions
                 (run_id, shipment_id, label, exceptions, recommended_actions, confidence, reasoning)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (run_id) DO UPDATE SET
+                shipment_id = EXCLUDED.shipment_id,
+                label = EXCLUDED.label,
+                exceptions = EXCLUDED.exceptions,
+                recommended_actions = EXCLUDED.recommended_actions,
+                confidence = EXCLUDED.confidence,
+                reasoning = EXCLUDED.reasoning
             """,
             (
                 run_id,
@@ -121,3 +131,122 @@ def get_decision(conn: psycopg.Connection, run_id: str) -> Decision | None:
         confidence=row[3],
         reasoning=row[4],
     )
+
+
+def insert_carrier_event(
+    conn: psycopg.Connection, tracking_number, event_type, status, eta, delayed, event_time
+) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO carrier_events (tracking_number, event_type, status, eta, delayed, event_time)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            (tracking_number, event_type, status, eta, delayed, event_time),
+        )
+    conn.commit()
+
+
+def count_carrier_events(conn: psycopg.Connection) -> int:
+    with conn.cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM carrier_events")
+        return int(cur.fetchone()[0])
+
+
+def get_latest_carrier_event(conn: psycopg.Connection, tracking_number: str) -> CarrierStatus | None:
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT tracking_number, status, eta, delayed FROM carrier_events "
+            "WHERE tracking_number = %s ORDER BY event_time DESC LIMIT 1",
+            (tracking_number,),
+        )
+        row = cur.fetchone()
+    if row is None:
+        return None
+    return CarrierStatus(tracking_number=row[0], status=row[1], eta=row[2], delayed=row[3])
+
+
+def insert_trace(conn: psycopg.Connection, trace: TraceRecord) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO runs
+                (run_id, node, input_json, output_json, latency_ms, tokens, cost_usd, model, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (run_id, node) DO UPDATE SET
+                input_json = EXCLUDED.input_json,
+                output_json = EXCLUDED.output_json,
+                latency_ms = EXCLUDED.latency_ms,
+                tokens = EXCLUDED.tokens,
+                cost_usd = EXCLUDED.cost_usd,
+                model = EXCLUDED.model,
+                created_at = EXCLUDED.created_at
+            """,
+            (
+                trace.run_id, trace.node, trace.input_json, trace.output_json,
+                trace.latency_ms, trace.tokens, trace.cost_usd, trace.model, trace.created_at,
+            ),
+        )
+    conn.commit()
+
+
+def list_run_ids(conn) -> list[str]:
+    with conn.cursor() as cur:
+        cur.execute("SELECT run_id, MAX(created_at) AS ts FROM runs GROUP BY run_id ORDER BY ts DESC")
+        return [row[0] for row in cur.fetchall()]
+
+
+def get_traces(conn, run_id: str) -> list[TraceRecord]:
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT run_id, node, input_json, output_json, latency_ms, tokens, cost_usd, model, created_at "
+            "FROM runs WHERE run_id = %s ORDER BY created_at",
+            (run_id,),
+        )
+        rows = cur.fetchall()
+    return [
+        TraceRecord(
+            run_id=r[0], node=r[1], input_json=r[2], output_json=r[3], latency_ms=r[4],
+            tokens=r[5], cost_usd=r[6], model=r[7], created_at=r[8],
+        )
+        for r in rows
+    ]
+
+
+def insert_budget_entry(conn, run_id: str, cost_usd: float, source: str) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO budget_ledger (run_id, cost_usd, source) VALUES (%s, %s, %s)",
+            (run_id, cost_usd, source),
+        )
+    conn.commit()
+
+
+def total_spend_usd(conn, since: datetime | None = None) -> float:
+    clause, params = ("WHERE created_at >= %s", (since,)) if since is not None else ("", ())
+    with conn.cursor() as cur:
+        cur.execute(f"SELECT COALESCE(SUM(cost_usd), 0) FROM budget_ledger {clause}", params)
+        return float(cur.fetchone()[0])
+
+
+def count_entries(
+    conn,
+    source: str | None = None,
+    source_prefix: str | None = None,
+    since: datetime | None = None,
+) -> int:
+    conditions = []
+    params: list = []
+    if source is not None:
+        conditions.append("source = %s")
+        params.append(source)
+    if source_prefix is not None:
+        conditions.append("source LIKE %s")
+        params.append(source_prefix + "%")
+    if since is not None:
+        conditions.append("created_at >= %s")
+        params.append(since)
+    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+    with conn.cursor() as cur:
+        cur.execute(f"SELECT COUNT(*) FROM budget_ledger {where}", params)
+        return int(cur.fetchone()[0])

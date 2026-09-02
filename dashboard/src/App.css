@@ -1,0 +1,77 @@
+.app-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  align-items: start;
+  gap: 20px;
+}
+
+.app-layout-side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.app-layout-main {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.app-eval-section {
+  margin-top: 20px;
+}
+
+/* Trace / Log tab switch above the main run panel. */
+.app-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.app-tab {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 8px 14px;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: color 120ms var(--ease), border-color 120ms var(--ease);
+}
+
+.app-tab:hover {
+  color: var(--ink);
+}
+
+.app-tab--active {
+  color: var(--ink);
+  border-bottom-color: var(--cyan);
+}
+
+.app-tab-count {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  background: var(--panel-2);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-tab {
+    transition: none;
+  }
+}

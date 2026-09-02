@@ -1,0 +1,151 @@
+.run-log {
+  max-height: 520px;
+  overflow-y: auto;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  scroll-behavior: smooth;
+}
+
+.run-log--empty {
+  padding: 40px 24px;
+  text-align: center;
+  max-height: none;
+  overflow: visible;
+}
+
+.run-log--empty p {
+  margin: 0;
+}
+
+.run-log-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Run boundary: a quiet rule with the run id sitting on it. */
+.run-log-run-head {
+  margin-top: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+  color: var(--cyan);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+
+.run-log-node {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.72rem;
+}
+
+.run-log-node-name {
+  color: var(--ink);
+}
+
+.run-log-meta {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.run-log-prose {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  max-width: 76ch;
+}
+
+.run-log-fields {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-size: 0.68rem;
+}
+
+.run-log-field {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.run-log-field dd {
+  margin: 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.run-log-key {
+  color: var(--muted);
+  text-transform: none;
+}
+
+.run-log-raw {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--panel-2);
+  border-radius: var(--radius);
+  font-size: 0.68rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.run-log-decision {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--panel-2);
+  border-radius: var(--radius);
+}
+
+.run-log-decision-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.run-log-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+
+.run-log-label--accept {
+  color: var(--accept);
+}
+
+.run-log-label--hold {
+  color: var(--hold);
+}
+
+.run-log-label--reroute {
+  color: var(--reroute);
+}
+
+.run-log-label--escalate {
+  color: var(--escalate);
+}
+
+.run-log-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .run-log {
+    scroll-behavior: auto;
+  }
+}

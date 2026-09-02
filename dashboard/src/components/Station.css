@@ -1,0 +1,130 @@
+.station {
+  --station-signal: var(--cyan);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 150px;
+  padding: 14px 12px 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-align: center;
+  transition:
+    border-color 240ms var(--ease),
+    opacity 240ms var(--ease);
+}
+
+.station-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background-color 240ms var(--ease);
+}
+
+.station-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.station-name {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.station-status {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.station-metrics {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 1.1em;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.station-metric--empty {
+  opacity: 0.4;
+}
+
+/* Pending: not yet reached, dimmed out. */
+.station--pending {
+  opacity: 0.45;
+}
+
+/* Active: the shipment is currently at this station. */
+.station--active {
+  border-color: var(--cyan);
+  animation: station-active-pulse 1.6s ease-in-out infinite;
+}
+
+.station--active .station-dot {
+  background: var(--cyan);
+  box-shadow: 0 0 8px 1px rgba(76, 201, 240, 0.55);
+}
+
+.station--active .station-status {
+  color: var(--cyan);
+}
+
+/* Done: trace arrived — a one-shot arrival pulse in the run's signal color. */
+.station--done {
+  border-color: var(--station-signal);
+  animation: station-arrive 640ms var(--ease) both;
+}
+
+.station--done .station-dot {
+  background: var(--station-signal);
+  box-shadow: 0 0 8px 1px var(--station-signal);
+}
+
+.station--done .station-status {
+  color: var(--station-signal);
+}
+
+.station--done .station-metrics {
+  color: var(--ink);
+}
+
+@keyframes station-active-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 201, 240, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 16px 3px rgba(76, 201, 240, 0.35);
+  }
+}
+
+@keyframes station-arrive {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+    transform: scale(0.94);
+  }
+  55% {
+    box-shadow: 0 0 20px 4px var(--station-signal);
+    transform: scale(1.03);
+  }
+  100% {
+    box-shadow: 0 0 6px 0 var(--station-signal);
+    transform: scale(1);
+  }
+}

@@ -1,0 +1,73 @@
+name: Nightly Eval
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # 06:00 UTC daily
+  workflow_dispatch:
+    inputs:
+      models:
+        description: "Comma-separated model ids"
+        default: "claude-opus-4-8,claude-sonnet-5,claude-haiku-4-5"
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Start Postgres
+        run: docker compose up -d postgres
+
+      - name: Wait for Postgres
+        if: steps.guard.outputs.run == 'true'
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose exec -T postgres pg_isready -U logistics >/dev/null 2>&1; then
+              echo "postgres ready"; exit 0
+            fi
+            sleep 2
+          done
+          echo "postgres did not become ready" >&2; exit 1
+
+      - name: Skip if no API key
+        id: guard
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "No ANTHROPIC_API_KEY secret set — skipping live eval."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run live model comparison
+        if: steps.guard.outputs.run == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LOGISTICS_DATABASE_URL: postgresql://logistics:logistics@localhost:5432/logistics
+          MODELS_INPUT: ${{ github.event.inputs.models }}
+        run: |
+          MODELS="${MODELS_INPUT:-claude-opus-4-8,claude-sonnet-5,claude-haiku-4-5}"
+          if ! [[ "$MODELS" =~ ^[A-Za-z0-9._,-]+$ ]]; then
+            echo "Invalid models input" >&2; exit 1
+          fi
+          uv run python -m evals.run --mode live --models "$MODELS"
+
+      - name: Upload results
+        if: steps.guard.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: evals/results/
