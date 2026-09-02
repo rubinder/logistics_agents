@@ -25,9 +25,12 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: ${{ vars.SITE_URL }}
+    # Deliberately no `environment:`. Targeting one changes the OIDC subject
+    # claim from repo:<repo>:ref:refs/heads/main to repo:<repo>:environment:
+    # <name>, which the deploy role does not trust. Keeping the job
+    # environment-free leaves the branch restriction enforced in exactly one
+    # place -- the IAM trust policy -- rather than split between IAM and a
+    # GitHub environment's deployment-branch rules.
     defaults:
       run:
         working-directory: dashboard
