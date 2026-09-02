@@ -22,6 +22,8 @@ Provisions the public showcase: the dashboard on S3 + CloudFront, the FastAPI se
 
 ## Prerequisites
 - Terraform ≥ 1.6, AWS CLI, an AWS identity with permissions for S3/CloudFront/EC2/IAM/SSM.
+- GitHub CLI (`gh`), authenticated, for the one-time repository variables that the
+  automatic dashboard deploy reads.
 - The EC2 clones the app from GitHub at boot, so the target branch must be pushed (default `milestone-8-aws-deploy`; point `repo_branch` at `main` once the stack is merged).
 - If your CLI authenticates via `aws login` (the `~/.aws/login` store), Terraform's provider can't read it directly — bridge it per command:
   `eval "$(aws configure export-credentials --format env)"; terraform …`
