@@ -7,6 +7,8 @@ import type { LogEntry } from "../hooks/useRunLog";
 
 export interface RunLogProps {
   entries: LogEntry[];
+  /** The run selected in the board, so the feed can jump to it. */
+  selectedRunId?: string | null;
 }
 
 /** How close to the bottom still counts as "following the feed", in px. */
@@ -88,16 +90,36 @@ function DecisionBlock({ decision }: { decision: Decision }) {
  * so a run streaming in never yanks them away from something they scrolled
  * back to read.
  */
-export function RunLog({ entries }: RunLogProps) {
+export function RunLog({ entries, selectedRunId = null }: RunLogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const runRefs = useRef(new Map<string, HTMLDivElement>());
   const stickToBottom = useRef(true);
+  const shownRun = useRef<string | null>(null);
 
+  // One effect decides between jumping to the selection and following the
+  // stream, so the two can never fight over scrollTop in the same tick.
   useEffect(() => {
     const node = scrollRef.current;
-    if (node && stickToBottom.current) {
+    if (!node) return;
+
+    if (selectedRunId !== null && selectedRunId !== shownRun.current) {
+      const block = runRefs.current.get(selectedRunId);
+      // A freshly selected run has no block until its first trace arrives;
+      // leaving shownRun unchanged retries on the next entries change.
+      if (block) {
+        block.scrollIntoView({ block: "start", behavior: "smooth" });
+        shownRun.current = selectedRunId;
+        // Picking a run is an explicit request to watch it, so resume
+        // following as it streams.
+        stickToBottom.current = true;
+      }
+      return;
+    }
+
+    if (stickToBottom.current) {
       node.scrollTop = node.scrollHeight;
     }
-  }, [entries]);
+  }, [entries, selectedRunId]);
 
   function handleScroll() {
     const node = scrollRef.current;
@@ -118,9 +140,25 @@ export function RunLog({ entries }: RunLogProps) {
     <div className="run-log panel" ref={scrollRef} onScroll={handleScroll}>
       {entries.map((entry, index) => {
         const startsRun = index === 0 || entries[index - 1].runId !== entry.runId;
+        const isSelected = entry.runId === selectedRunId;
         return (
-          <div className="run-log-entry" key={entry.key}>
-            {startsRun && <div className="run-log-run-head mono">{entry.runId}</div>}
+          <div
+            className={`run-log-entry ${isSelected ? "run-log-entry--current" : ""}`}
+            key={entry.key}
+            ref={
+              startsRun
+                ? (el) => {
+                    if (el) runRefs.current.set(entry.runId, el);
+                    else runRefs.current.delete(entry.runId);
+                  }
+                : undefined
+            }
+          >
+            {startsRun && (
+              <div className="run-log-run-head mono" aria-current={isSelected ? "true" : undefined}>
+                {entry.runId}
+              </div>
+            )}
             {entry.kind === "decision" && entry.decision ? (
               <DecisionBlock decision={entry.decision} />
             ) : (

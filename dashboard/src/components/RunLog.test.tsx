@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { LogEntry } from "../hooks/useRunLog";
 import { RunLog } from "./RunLog";
@@ -149,6 +149,54 @@ describe("RunLog", () => {
     );
     expect(screen.getByText("Node said this.")).toBeInTheDocument();
     expect(screen.getByText("Decision said something else.")).toBeInTheDocument();
+  });
+
+  it("brings the selected run into view when the selection changes", () => {
+    const scrollIntoView = vi.fn();
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    const entries = [
+      traceEntry("run-1", "orchestrator", { reasoning: "a" }),
+      traceEntry("run-2", "orchestrator", { reasoning: "b" }),
+    ];
+
+    const { rerender } = render(<RunLog entries={entries} selectedRunId="run-1" />);
+    scrollIntoView.mockClear();
+
+    rerender(<RunLog entries={entries} selectedRunId="run-2" />);
+    expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  it("jumps to a re-selected run even though nothing new was appended", () => {
+    // The feed de-duplicates, so re-selecting a run appends nothing. Without a
+    // selection-driven jump the log sits still and looks broken.
+    const scrollIntoView = vi.fn();
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    const entries = [
+      traceEntry("run-1", "orchestrator", { reasoning: "a" }),
+      traceEntry("run-2", "orchestrator", { reasoning: "b" }),
+    ];
+
+    const { rerender } = render(<RunLog entries={entries} selectedRunId="run-2" />);
+    scrollIntoView.mockClear();
+
+    // Same entries array — only the selection changes.
+    rerender(<RunLog entries={entries} selectedRunId="run-1" />);
+    expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  it("marks the selected run's block so it is identifiable once reached", () => {
+    render(
+      <RunLog
+        entries={[
+          traceEntry("run-1", "orchestrator", { reasoning: "a" }),
+          traceEntry("run-2", "orchestrator", { reasoning: "b" }),
+        ]}
+        selectedRunId="run-2"
+      />,
+    );
+    const current = document.querySelectorAll('[aria-current="true"]');
+    expect(current).toHaveLength(1);
+    expect(current[0].textContent).toContain("run-2");
   });
 
   it("renders an empty state when nothing has streamed yet", () => {
