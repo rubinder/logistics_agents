@@ -80,10 +80,10 @@ export function AboutExtended() {
       <section className="about-section">
         <h2>How it is evaluated</h2>
         <p>
-          A labelled dataset of shipment scenarios pairs each notification with its expected
+          A labeled dataset of shipment scenarios pairs each notification with its expected
           outcome, one perturbation at a time: a short shipment, a late delivery, missing paperwork,
           damage, an unknown purchase order, a destination without the capacity to receive the
-          goods. A drop in score therefore points at a specific behaviour rather than a vague sense
+          goods. A drop in score therefore points at a specific behavior rather than a vague sense
           that quality moved.
         </p>
         <p>

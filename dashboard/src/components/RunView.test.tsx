@@ -5,7 +5,7 @@ import { FIXTURE_DECISION, FIXTURE_RUN_ID, FIXTURE_TRACES } from "../api/fixture
 import { RunView } from "./RunView";
 
 // RunView is presentational: `App` owns the stream (so the Log tab can share
-// it) and passes the replay down. The streaming behaviour these props come
+// it) and passes the replay down. The streaming behavior these props come
 // from is covered in ../hooks/useRunStream.test.ts.
 describe("RunView", () => {
   it("renders every revealed trace and the decision stamp", () => {
