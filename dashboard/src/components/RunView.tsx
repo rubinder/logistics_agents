@@ -1,12 +1,14 @@
 import "./RunView.css";
 
-import type { Api } from "../api/client";
-import { useRunStream } from "../hooks/useRunStream";
+import type { Decision, TraceRecord } from "../api/types";
 import { RunRail } from "./RunRail";
 
 export interface RunViewProps {
   runId: string | null;
-  api: Api;
+  /** Traces revealed so far by the stream `App` owns and shares with the log. */
+  traces: TraceRecord[];
+  decision: Decision | null;
+  error: string | null;
 }
 
 const MAX_JSON_PREVIEW = 140;
@@ -22,11 +24,12 @@ function formatUsd(value: number): string {
 /**
  * The main run view: the `RunRail` "watch it think" visualizer over a
  * per-node trace detail table (model, cost, latency, tokens, and truncated
- * input/output JSON) in mono, driven by `useRunStream`'s replay of the
- * selected run.
+ * input/output JSON) in mono, rendering the replay `App` streams in.
+ *
+ * The stream itself lives in `App` so the Log tab feeds off the same
+ * subscription — two views of one replay rather than two fetches.
  */
-export function RunView({ runId, api }: RunViewProps) {
-  const { traces, decision, error } = useRunStream(runId, api);
+export function RunView({ runId, traces, decision, error }: RunViewProps) {
 
   if (!runId) {
     return (

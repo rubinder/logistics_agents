@@ -1,74 +1,52 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { Api } from "../api/client";
-import { FIXTURE_RUN_ID } from "../api/fixtures";
+import { FIXTURE_DECISION, FIXTURE_RUN_ID, FIXTURE_TRACES } from "../api/fixtures";
 import { RunView } from "./RunView";
 
-// Reduced-motion so useRunStream reveals every trace at once instead of on
-// its replay interval, keeping this test deterministic (no fake timers /
-// racing intervals against findBy's polling).
-function mockReducedMotion() {
-  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-    matches: true,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })) as unknown as typeof window.matchMedia;
-}
-
+// RunView is presentational: `App` owns the stream (so the Log tab can share
+// it) and passes the replay down. The streaming behaviour these props come
+// from is covered in ../hooks/useRunStream.test.ts.
 describe("RunView", () => {
-  const originalFetch = globalThis.fetch;
-  const originalMatchMedia = window.matchMedia;
-
-  beforeEach(() => {
-    mockReducedMotion();
-  });
-
-  afterEach(() => {
-    globalThis.fetch = originalFetch;
-    window.matchMedia = originalMatchMedia;
-    vi.restoreAllMocks();
-    vi.unstubAllEnvs();
-  });
-
-  it("replays the fixture trace onto the rail and shows the decision", async () => {
-    // Explicit fixtures mode: getTrace/getDecision serve bundled fixture
-    // data deterministically, rather than relying on a rejected fetch to
-    // trigger a (now-removed) per-run fixture fallback.
-    vi.stubEnv("VITE_USE_FIXTURES", "1");
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error("no network in tests"));
-    const api = new Api("");
-    render(<RunView runId={FIXTURE_RUN_ID} api={api} />);
+  it("renders every revealed trace and the decision stamp", () => {
+    render(
+      <RunView
+        runId={FIXTURE_RUN_ID}
+        traces={FIXTURE_TRACES}
+        decision={FIXTURE_DECISION}
+        error={null}
+      />,
+    );
 
     for (const node of ["orchestrator", "inventory", "carrier", "exception", "synthesis"]) {
-      const matches = await screen.findAllByText(new RegExp(node, "i"), undefined, { timeout: 5000 });
-      expect(matches.length).toBeGreaterThan(0);
+      expect(screen.getAllByText(new RegExp(node, "i")).length).toBeGreaterThan(0);
     }
 
-    const stamp = await screen.findByRole("status", undefined, { timeout: 5000 });
-    expect(stamp).toHaveTextContent(/HOLD/);
+    expect(screen.getByRole("status")).toHaveTextContent(/HOLD/);
   });
 
   it("shows a prompt when no run is selected", () => {
-    const api = new Api("");
-    render(<RunView runId={null} api={api} />);
+    render(<RunView runId={null} traces={[]} decision={null} error={null} />);
     expect(screen.getByText(/select a run/i)).toBeInTheDocument();
   });
 
-  it("shows an honest error state (not fixture data) when a live getTrace fails", async () => {
-    // Live mode (no VITE_USE_FIXTURES): a rejecting fetch must surface as an
-    // error, never as a silently-substituted fixture trace/decision.
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error("network down"));
-    const api = new Api("");
-    render(<RunView runId={FIXTURE_RUN_ID} api={api} />);
+  it("shows the error state instead of any trace content", () => {
+    render(
+      <RunView
+        runId={FIXTURE_RUN_ID}
+        traces={[]}
+        decision={null}
+        error="Couldn't load this run's trace."
+      />,
+    );
 
-    expect(await screen.findByText(/couldn.t load this run.s trace/i)).toBeInTheDocument();
+    expect(screen.getByText(/couldn.t load this run.s trace/i)).toBeInTheDocument();
     expect(screen.queryByText(/orchestrator/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("waits for the first trace rather than rendering an empty table", () => {
+    render(<RunView runId={FIXTURE_RUN_ID} traces={[]} decision={null} error={null} />);
+    expect(screen.getByText(/waiting for the first trace/i)).toBeInTheDocument();
   });
 });

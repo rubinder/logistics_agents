@@ -6,10 +6,15 @@ import { Api } from "./api/client";
 import { FIXTURE_BUDGET, FIXTURE_EVAL_REPORTS } from "./api/fixtures";
 import type { BudgetStatus, EvalReport } from "./api/types";
 import { EvalBoard } from "./components/EvalBoard";
+import { RunLog } from "./components/RunLog";
 import { RunsBoard } from "./components/RunsBoard";
 import { RunView } from "./components/RunView";
 import { Shell } from "./components/Shell";
 import { TriggerPanel } from "./components/TriggerPanel";
+import { useRunLog } from "./hooks/useRunLog";
+import { useRunStream } from "./hooks/useRunStream";
+
+type MainTab = "trace" | "log";
 
 export default function App() {
   // A single Api instance for the app's lifetime, so its `usingFixtures`
@@ -26,6 +31,13 @@ export default function App() {
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [usingFixtures, setUsingFixtures] = useState(false);
   const [evalReports, setEvalReports] = useState<EvalReport[]>(FIXTURE_EVAL_REPORTS);
+  const [tab, setTab] = useState<MainTab>("trace");
+
+  // Owned here, not in RunView, so both tabs render one replay rather than
+  // opening two subscriptions that fetch twice and animate out of step.
+  const { traces, decision, error } = useRunStream(selectedRunId, api);
+  // Above the tab switch, so the feed keeps filling while Trace is on screen.
+  const logEntries = useRunLog(traces, decision);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,7 +92,45 @@ export default function App() {
           <TriggerPanel api={api} scenarios={scenarios} budget={budget} onTriggered={handleTriggered} />
         </aside>
         <section className="app-layout-main">
-          <RunView runId={selectedRunId} api={api} />
+          <div className="app-tabs" role="tablist" aria-label="Run views">
+            <button
+              type="button"
+              role="tab"
+              id="tab-trace"
+              aria-selected={tab === "trace"}
+              aria-controls="panel-trace"
+              className={`app-tab ${tab === "trace" ? "app-tab--active" : ""}`}
+              onClick={() => setTab("trace")}
+            >
+              Trace
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-log"
+              aria-selected={tab === "log"}
+              aria-controls="panel-log"
+              className={`app-tab ${tab === "log" ? "app-tab--active" : ""}`}
+              onClick={() => setTab("log")}
+            >
+              Log
+              {logEntries.length > 0 && <span className="app-tab-count">{logEntries.length}</span>}
+            </button>
+          </div>
+          {tab === "trace" ? (
+            <div role="tabpanel" id="panel-trace" aria-labelledby="tab-trace">
+              <RunView
+                runId={selectedRunId}
+                traces={traces}
+                decision={decision}
+                error={error}
+              />
+            </div>
+          ) : (
+            <div role="tabpanel" id="panel-log" aria-labelledby="tab-log">
+              <RunLog entries={logEntries} />
+            </div>
+          )}
         </section>
       </div>
       <section className="app-eval-section">
