@@ -48,8 +48,10 @@ def test_decision_round_trip(postgres_conn):
 
 
 def test_decision_isolation_allows_reused_run_id(postgres_conn):
-    # RUN-1 is also used by test_decision_round_trip; this passes only if the
-    # fixture truly clears committed rows between tests (no duplicate-PK leak).
+    # RUN-1 is also used by test_decision_round_trip. Writing it again replaces
+    # the row rather than raising, so re-running an eval over the same run_ids is
+    # idempotent. Note this no longer doubles as proof that the fixture clears
+    # committed rows between tests -- the upsert would mask a leak.
     decision = Decision(
         label=DecisionLabel.ACCEPT,
         exceptions=[],
@@ -59,3 +61,28 @@ def test_decision_isolation_allows_reused_run_id(postgres_conn):
     )
     repository.insert_decision(postgres_conn, "RUN-1", "SH-2", decision)
     assert repository.get_decision(postgres_conn, "RUN-1") == decision
+
+
+def test_insert_trace_is_idempotent(postgres_conn):
+    """Re-recording an eval writes the same (run_id, node) keys again.
+
+    Without an upsert the second run dies on runs_pkey partway through, leaving
+    the database holding a torn mix of two runs.
+    """
+    from logistics_agents.domain.models import TraceRecord
+
+    def _trace(latency: int) -> TraceRecord:
+        return TraceRecord(
+            run_id="RUN-T", node="synthesis", input_json="{}", output_json="{}",
+            latency_ms=latency, tokens=10, cost_usd=0.001, model="claude-haiku-4-5",
+            created_at=datetime(2026, 9, 2, tzinfo=timezone.utc),
+        )
+
+    repository.insert_trace(postgres_conn, _trace(100))
+    repository.insert_trace(postgres_conn, _trace(250))
+
+    with postgres_conn.cursor() as cur:
+        cur.execute("SELECT latency_ms FROM runs WHERE run_id = %s AND node = %s",
+                    ("RUN-T", "synthesis"))
+        rows = cur.fetchall()
+    assert rows == [(250,)], "second write must replace the first, not duplicate or fail"

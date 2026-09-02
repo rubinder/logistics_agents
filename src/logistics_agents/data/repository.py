@@ -93,6 +93,13 @@ def insert_decision(
             INSERT INTO decisions
                 (run_id, shipment_id, label, exceptions, recommended_actions, confidence, reasoning)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (run_id) DO UPDATE SET
+                shipment_id = EXCLUDED.shipment_id,
+                label = EXCLUDED.label,
+                exceptions = EXCLUDED.exceptions,
+                recommended_actions = EXCLUDED.recommended_actions,
+                confidence = EXCLUDED.confidence,
+                reasoning = EXCLUDED.reasoning
             """,
             (
                 run_id,
@@ -166,6 +173,14 @@ def insert_trace(conn: psycopg.Connection, trace: TraceRecord) -> None:
             INSERT INTO runs
                 (run_id, node, input_json, output_json, latency_ms, tokens, cost_usd, model, created_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (run_id, node) DO UPDATE SET
+                input_json = EXCLUDED.input_json,
+                output_json = EXCLUDED.output_json,
+                latency_ms = EXCLUDED.latency_ms,
+                tokens = EXCLUDED.tokens,
+                cost_usd = EXCLUDED.cost_usd,
+                model = EXCLUDED.model,
+                created_at = EXCLUDED.created_at
             """,
             (
                 trace.run_id, trace.node, trace.input_json, trace.output_json,

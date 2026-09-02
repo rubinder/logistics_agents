@@ -1,8 +1,9 @@
 # USD per 1,000,000 tokens: (input_per_mtok, output_per_mtok).
-# Sonnet 5 has intro pricing ($2/$10 through 2026-08-31); we use standard rates.
+# Rates as published by Anthropic. Sonnet 5 is $2/$10: an earlier note here assumed
+# that was introductory pricing reverting to $3/$15 after 2026-08-31, which it did not.
 MODEL_PRICING: dict[str, tuple[float, float]] = {
     "claude-opus-4-8": (5.00, 25.00),
-    "claude-sonnet-5": (3.00, 15.00),
+    "claude-sonnet-5": (2.00, 10.00),
     "claude-haiku-4-5": (1.00, 5.00),
 }
 
