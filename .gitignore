@@ -8,3 +8,6 @@ fixtures/*.tmp
 .superpowers/
 .DS_Store
 evals/results/
+
+# Playwright MCP session artifacts (snapshots, console logs, screenshots).
+.playwright-mcp/
