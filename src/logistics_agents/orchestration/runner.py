@@ -18,9 +18,15 @@ def run_pipeline(
 
     Non-transactional: each trace and the final decision are committed
     independently, and an error raised by any agent propagates — leaving the
-    already-committed traces with no decision row. Callers running a dataset
-    must wrap each case and supply a unique run_id per run; reusing a run_id
-    raises IntegrityError on the runs/decisions primary keys.
+    already-committed traces with no decision row.
+
+    Trace and decision writes upsert on their primary keys, so re-running a
+    run_id replaces that run's rows rather than raising. That makes a clean
+    re-run idempotent, but a run that fails partway leaves the nodes it reached
+    overwritten while later nodes still hold the previous attempt's values — a
+    torn mix of two runs under one id. Callers running a dataset should still
+    supply a unique run_id per case; the upsert exists so a repeated run is
+    recoverable, not so ids can be shared.
     """
     plan = orchestrator.plan(asn, llm, model)
     tracer.record("orchestrator", asn, plan.value, plan.meta)
